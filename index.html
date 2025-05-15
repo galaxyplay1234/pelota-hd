@@ -98,15 +98,14 @@
       const [h, m] = horaMinuto.split(':').map(x => parseInt(x, 10));
       if (isNaN(h) || isNaN(m)) return horaMinuto;
 
-      let horaBrasilia = h + 2;
-      let minutoBrasilia = m;
-
-      if (horaBrasilia >= 24) {
-        horaBrasilia -= 24;
+      // Convertendo de GMT+2 (Europa) para GMT-3 (Brasil) → diferença de -5 horas
+      let horaBrasilia = h - 5;
+      if (horaBrasilia < 0) {
+        horaBrasilia += 24;
       }
 
       const hh = horaBrasilia.toString().padStart(2, '0');
-      const mm = minutoBrasilia.toString().padStart(2, '0');
+      const mm = m.toString().padStart(2, '0');
 
       return `${hh}:${mm}`;
     }
@@ -131,7 +130,6 @@
         }
 
         const eventos = Array.from(listaEventos.children);
-
         if (eventos.length === 0) {
           container.innerHTML = '<p>Nenhum evento encontrado.</p>';
           return;
@@ -146,7 +144,7 @@
 
           const horarioSpan = linkPrincipal.querySelector('span.t');
           const horarioOriginal = horarioSpan ? horarioSpan.textContent.trim() : '';
-          const horario = ajustarHorarioBrasil(horarioOriginal);
+          const horarioAjustado = ajustarHorarioBrasil(horarioOriginal);
 
           let tituloCompleto = linkPrincipal.childNodes[0].textContent.trim();
           tituloCompleto = tituloCompleto.replace(horarioOriginal, '').trim();
@@ -156,7 +154,7 @@
 
           const tituloDiv = document.createElement('div');
           tituloDiv.className = 'titulo-evento';
-          tituloDiv.innerHTML = `${tituloCompleto} <span class="t">${horario}</span>`;
+          tituloDiv.innerHTML = `${tituloCompleto} <span class="t">${horarioAjustado}</span>`;
           li.appendChild(tituloDiv);
 
           const canaisUlOriginal = evento.querySelector('ul');
