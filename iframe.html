@@ -1,1 +1,50 @@
+<!-- iframe.html -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Link do Canal</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #0e0e0e; color: #fff; padding: 20px; text-align: center; }
+    #iframe-link { margin-top: 20px; word-break: break-all; font-size: 1em; }
+    button { margin-top: 10px; padding: 10px 20px; background: #1abc9c; border: none; border-radius: 5px; color: #fff; font-size: 1em; cursor: pointer; }
+    button:hover { background: #16a085; }
+  </style>
+</head>
+<body>
+  <h1>🔗 Link do Iframe</h1>
+  <div id="iframe-link">Buscando...</div>
+  <button id="copy-btn" style="display:none;">Copiar Link</button>
 
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const url = params.get('url');
+    const scraperApi = "https://api.scraperapi.com?api_key=f367a6108ce7e5f1fd57ef78c49bd671&render=true&url=";
+
+    fetch(scraperApi + url)
+      .then(res => res.text())
+      .then(html => {
+        const match = html.match(/<iframe[^>]+src="([^"]+)"/i);
+        const link = match ? match[1] : null;
+        const iframeDiv = document.getElementById('iframe-link');
+        const copyBtn = document.getElementById('copy-btn');
+
+        if (link) {
+          iframeDiv.innerHTML = `<a href="${link}" target="_blank">${link}</a>`;
+          copyBtn.style.display = 'inline-block';
+          copyBtn.onclick = () => {
+            navigator.clipboard.writeText(link);
+            copyBtn.textContent = "Copiado!";
+            setTimeout(() => copyBtn.textContent = "Copiar Link", 2000);
+          };
+        } else {
+          iframeDiv.textContent = 'Iframe não encontrado.';
+        }
+      })
+      .catch(() => {
+        document.getElementById('iframe-link').textContent = 'Erro ao buscar o iframe.';
+      });
+  </script>
+</body>
+</html>
