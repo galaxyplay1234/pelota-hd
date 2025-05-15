@@ -5,7 +5,7 @@
   <title>Agenda Esportiva</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: #e9ecef;
       margin: 0;
       padding: 20px;
@@ -14,18 +14,19 @@
     header {
       background: #0056b3;
       color: #fff;
-      padding: 25px;
+      padding: 25px 20px;
       text-align: center;
       font-size: 28px;
-      font-weight: bold;
+      font-weight: 700;
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,86,179,0.4);
       margin-bottom: 30px;
+      letter-spacing: 1.2px;
     }
     ul.menu {
       list-style: none;
       padding: 0;
-      max-width: 700px;
+      max-width: 650px;
       margin: 0 auto;
     }
     ul.menu > li {
@@ -34,37 +35,55 @@
       margin-bottom: 18px;
       box-shadow: 0 3px 8px rgba(0,0,0,0.08);
       padding: 18px 30px;
+      transition: box-shadow 0.3s ease;
     }
-    .titulo-evento {
+    ul.menu > li:hover {
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+    ul.menu > li > .titulo-evento {
+      color: #111;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 10px;
+      letter-spacing: 0.03em;
+      user-select: none;
+      cursor: default;
     }
-    span.t {
-      background: #007bff;
+    ul.menu > li > .titulo-evento span.t {
+      background-color: #007bff;
       color: #fff;
+      font-weight: 700;
+      font-size: 14px;
       padding: 4px 10px;
       border-radius: 20px;
-      margin-left: 10px;
-      font-size: 14px;
+      min-width: 60px;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0,123,255,0.5);
     }
-    ul li ul li a {
-      display: block;
-      color: #007bff;
+    ul.menu > li > ul {
+      margin-top: 12px;
+      padding-left: 0;
+      border-left: none;
+      list-style: none;
+    }
+    ul.menu > li > ul > li {
+      margin-bottom: 4px;
+    }
+    ul.menu > li > ul > li > a {
       text-decoration: none;
+      color: #007bff;
       font-weight: 500;
-      padding: 6px 0;
-      cursor: pointer;
-    }
-    ul li ul li a:hover {
-      text-decoration: underline;
-    }
-    .iframe-link {
+      font-size: 16px;
       display: block;
-      margin-top: 4px;
-      font-size: 14px;
-      color: #555;
-      word-wrap: break-word;
+      padding: 4px 0;
+      transition: color 0.2s ease;
+      border-radius: 6px;
+    }
+    ul.menu > li > ul > li > a:hover {
+      color: #0056b3;
+      background-color: rgba(0, 123, 255, 0.1);
     }
   </style>
 </head>
@@ -73,20 +92,22 @@
   <div id="eventos">Carregando eventos...</div>
 
   <script>
-    async function fetchIframeSrc(urlBase64) {
-      const fullUrl = 'https://todopelotatvhd.com/embed/eventos.html?r=' + urlBase64;
-      const apiUrl = 'https://api.scraperapi.com/?api_key=f367a6108ce7e5f1fd57ef78c49bd671&render=true&url=' + encodeURIComponent(fullUrl);
-      try {
-        const res = await fetch(apiUrl);
-        const html = await res.text();
-        const temp = document.createElement('div');
-        temp.innerHTML = html;
-        const iframe = temp.querySelector('iframe');
-        return iframe ? iframe.src : null;
-      } catch (e) {
-        console.error("Erro ao buscar iframe:", e);
-        return null;
+    function ajustarHorarioBrasil(horaMinuto) {
+      if (!horaMinuto) return '';
+
+      const [h, m] = horaMinuto.split(':').map(x => parseInt(x, 10));
+      if (isNaN(h) || isNaN(m)) return horaMinuto;
+
+      // Convertendo de GMT+2 (Europa) para GMT-3 (Brasil) → diferença de -5 horas
+      let horaBrasilia = h - 5;
+      if (horaBrasilia < 0) {
+        horaBrasilia += 24;
       }
+
+      const hh = horaBrasilia.toString().padStart(2, '0');
+      const mm = m.toString().padStart(2, '0');
+
+      return `${hh}:${mm}`;
     }
 
     async function carregarEventos() {
@@ -95,6 +116,7 @@
         const response = await fetch(url);
         const data = await response.json();
         const html = data.contents;
+
         const temp = document.createElement('div');
         temp.innerHTML = html;
 
@@ -108,44 +130,52 @@
         }
 
         const eventos = Array.from(listaEventos.children);
+        if (eventos.length === 0) {
+          container.innerHTML = '<p>Nenhum evento encontrado.</p>';
+          return;
+        }
+
         const ul = document.createElement('ul');
         ul.className = 'menu';
 
         eventos.forEach(evento => {
           const linkPrincipal = evento.querySelector('a');
+          if (!linkPrincipal) return;
+
           const horarioSpan = linkPrincipal.querySelector('span.t');
-          const horario = horarioSpan ? horarioSpan.textContent.trim() : '';
-          let titulo = linkPrincipal.childNodes[0].textContent.trim().replace(horario, '').trim();
+          const horarioOriginal = horarioSpan ? horarioSpan.textContent.trim() : '';
+          const horarioAjustado = ajustarHorarioBrasil(horarioOriginal);
+
+          let tituloCompleto = linkPrincipal.childNodes[0].textContent.trim();
+          tituloCompleto = tituloCompleto.replace(horarioOriginal, '').trim();
 
           const li = document.createElement('li');
+          li.className = evento.className;
+
           const tituloDiv = document.createElement('div');
           tituloDiv.className = 'titulo-evento';
-          tituloDiv.innerHTML = `${titulo} <span class="t">${horario}</span>`;
+          tituloDiv.innerHTML = `${tituloCompleto} <span class="t">${horarioAjustado}</span>`;
           li.appendChild(tituloDiv);
 
           const canaisUlOriginal = evento.querySelector('ul');
           if (canaisUlOriginal) {
             const canaisUl = document.createElement('ul');
+            canaisUl.style.marginTop = '10px';
+            canaisUl.style.paddingLeft = '0';
+            canaisUl.style.listStyle = 'none';
 
             canaisUlOriginal.querySelectorAll('li.subitem1 a').forEach(canalA => {
-              const canalLi = document.createElement('li');
-              const link = document.createElement('a');
-              const nome = canalA.textContent.trim().replace(/Calidad\s*\d+p/i, '').trim();
-              link.textContent = nome;
-              link.href = "#";
-              link.onclick = async (e) => {
-                e.preventDefault();
-                if (canalLi.querySelector('.iframe-link')) return;
+              let nomeCanal = canalA.childNodes[0].textContent.trim();
+              nomeCanal = nomeCanal.replace(/Calidad\s*\d+p/i, '').trim();
 
-                const base64 = new URL(canalA.href).searchParams.get('r');
-                const iframeUrl = await fetchIframeSrc(base64);
-                const iframeDisplay = document.createElement('div');
-                iframeDisplay.className = 'iframe-link';
-                iframeDisplay.textContent = iframeUrl || 'Iframe não encontrado.';
-                canalLi.appendChild(iframeDisplay);
-              };
-              canalLi.appendChild(link);
-              canaisUl.appendChild(canalLi);
+              const liCanal = document.createElement('li');
+              const aCanal = document.createElement('a');
+              aCanal.href = canalA.href;
+              aCanal.target = '_blank';
+              aCanal.textContent = nomeCanal;
+              liCanal.appendChild(aCanal);
+
+              canaisUl.appendChild(liCanal);
             });
 
             li.appendChild(canaisUl);
@@ -155,9 +185,10 @@
         });
 
         container.appendChild(ul);
+
       } catch (err) {
         console.error('Erro ao carregar eventos:', err);
-        document.getElementById('eventos').textContent = 'Erro ao carregar eventos.';
+        document.getElementById('eventos').innerText = 'Erro ao carregar eventos.';
       }
     }
 
