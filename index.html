@@ -40,7 +40,6 @@
     ul.menu > li:hover {
       box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     }
-    /* Aqui modificamos o título principal para ser um div e manter estilo do link */
     ul.menu > li > .titulo-evento {
       color: #111;
       font-weight: 600;
@@ -101,13 +100,12 @@
 
       const agora = new Date();
       const dataUTC = new Date(Date.UTC(agora.getUTCFullYear(), agora.getUTCMonth(), agora.getUTCDate(), h, m));
+      const dataBrasil = new Date(dataUTC.getTime() - 3 * 60 * 60 * 1000);
 
-      const dataGMTmenos5 = new Date(dataUTC.getTime() - 5 * 60 * 60 * 1000);
+      const hh = dataBrasil.getUTCHours().toString().padStart(2, '0');
+      const mm = dataBrasil.getUTCMinutes().toString().padStart(2, '0');
 
-      const hh = dataGMTmenos5.getUTCHours().toString().padStart(2, '0');
-      const mm = dataGMTmenos5.getUTCMinutes().toString().padStart(2, '0');
-
-      return `:`;
+      return `${hh}:${mm}`;
     }
 
     async function carregarEventos() {
@@ -130,7 +128,6 @@
         }
 
         const eventos = Array.from(listaEventos.children);
-
         if (eventos.length === 0) {
           container.innerHTML = '<p>Nenhum evento encontrado.</p>';
           return;
@@ -153,10 +150,9 @@
           const li = document.createElement('li');
           li.className = evento.className;
 
-          // Aqui substituímos o <a> por um <div> para remover o clique do texto principal:
           const tituloDiv = document.createElement('div');
           tituloDiv.className = 'titulo-evento';
-          tituloDiv.innerHTML = ` <span class="t"></span>`;
+          tituloDiv.innerHTML = `${tituloCompleto} <span class="t">${horario}</span>`;
           li.appendChild(tituloDiv);
 
           const canaisUlOriginal = evento.querySelector('ul');
