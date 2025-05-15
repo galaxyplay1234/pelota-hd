@@ -65,67 +65,60 @@
     ul.menu > li > ul {
       margin-top: 12px;
       padding-left: 0;
-      border-left: none;
       list-style: none;
     }
     ul.menu > li > ul > li {
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
     ul.menu > li > ul > li > a {
       text-decoration: none;
       color: #007bff;
       font-weight: 500;
       font-size: 16px;
-      display: inline-block;
+      display: block;
       padding: 4px 0;
       border-radius: 6px;
       cursor: pointer;
     }
     ul.menu > li > ul > li > a:hover {
       color: #0056b3;
+      background-color: rgba(0, 123, 255, 0.1);
     }
-    .iframe-link {
-      font-size: 13px;
-      color: #111;
-      background: #f1f3f5;
-      padding: 6px 10px;
-      margin-top: 4px;
-      border-radius: 6px;
+    #iframe-link {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 16px;
       word-break: break-all;
+      background: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      max-width: 90%;
+      margin-left: auto;
+      margin-right: auto;
     }
   </style>
 </head>
 <body>
   <header>Agenda Esportiva</header>
   <div id="eventos">Carregando eventos...</div>
+  <div id="iframe-link"></div>
 
   <script>
+    const apiKey = 'f367a6108ce7e5f1fd57ef78c49bd671'; // SUA CHAVE ScraperAPI
+
     function ajustarHorarioBrasil(horaMinuto) {
       if (!horaMinuto) return '';
       const [h, m] = horaMinuto.split(':').map(x => parseInt(x, 10));
       if (isNaN(h) || isNaN(m)) return horaMinuto;
-      const agora = new Date();
-      const dataUTC = new Date(Date.UTC(agora.getUTCFullYear(), agora.getUTCMonth(), agora.getUTCDate(), h, m));
-      const dataBR = new Date(dataUTC.getTime() - 3 * 60 * 60 * 1000); // GMT-3 (Brasília)
-      const hh = dataBR.getHours().toString().padStart(2, '0');
-      const mm = dataBR.getMinutes().toString().padStart(2, '0');
-      return `${hh}:${mm}`;
-    }
 
-    async function buscarIframeSrc(link) {
-      const apiKey = 'f367a6108ce7e5f1fd57ef78c49bd671';
-      const apiUrl = `https://api.scraperapi.com?api_key=${apiKey}&url=${encodeURIComponent(link)}`;
-      try {
-        const res = await fetch(apiUrl);
-        const html = await res.text();
-        const temp = document.createElement('div');
-        temp.innerHTML = html;
-        const iframe = temp.querySelector('iframe');
-        return iframe ? iframe.src : 'iframe não encontrado';
-      } catch (err) {
-        console.error('Erro ao buscar iframe:', err);
-        return 'Erro ao buscar iframe';
-      }
+      const data = new Date();
+      data.setUTCHours(h, m, 0, 0);
+      data.setHours(data.getHours() - 2); // Ajuste para GMT-3
+
+      const hh = data.getHours().toString().padStart(2, '0');
+      const mm = data.getMinutes().toString().padStart(2, '0');
+      return `${hh}:${mm}`;
     }
 
     async function carregarEventos() {
@@ -147,16 +140,10 @@
           return;
         }
 
-        const eventos = Array.from(listaEventos.children);
-        if (eventos.length === 0) {
-          container.innerHTML = '<p>Nenhum evento encontrado.</p>';
-          return;
-        }
-
         const ul = document.createElement('ul');
         ul.className = 'menu';
 
-        eventos.forEach(evento => {
+        Array.from(listaEventos.children).forEach(evento => {
           const linkPrincipal = evento.querySelector('a');
           if (!linkPrincipal) return;
 
@@ -168,8 +155,6 @@
           tituloCompleto = tituloCompleto.replace(horarioOriginal, '').trim();
 
           const li = document.createElement('li');
-          li.className = evento.className;
-
           const tituloDiv = document.createElement('div');
           tituloDiv.className = 'titulo-evento';
           tituloDiv.innerHTML = `${tituloCompleto} <span class="t">${horario}</span>`;
@@ -178,27 +163,38 @@
           const canaisUlOriginal = evento.querySelector('ul');
           if (canaisUlOriginal) {
             const canaisUl = document.createElement('ul');
-            canaisUl.style.marginTop = '10px';
 
             canaisUlOriginal.querySelectorAll('li.subitem1 a').forEach(canalA => {
-              let nomeCanal = canalA.childNodes[0].textContent.trim();
-              nomeCanal = nomeCanal.replace(/Calidad\s*\d+p/i, '').trim();
+              const nomeCanal = canalA.childNodes[0].textContent.replace(/Calidad\s*\d+p/i, '').trim();
+              const href = canalA.href;
 
               const liCanal = document.createElement('li');
               const aCanal = document.createElement('a');
               aCanal.textContent = nomeCanal;
-              aCanal.href = "#";
-              aCanal.addEventListener('click', async (e) => {
-                e.preventDefault();
-                aCanal.textContent = `Buscando iframe de ${nomeCanal}...`;
-                const iframeLink = await buscarIframeSrc(canalA.href);
-                aCanal.textContent = nomeCanal;
 
-                const info = document.createElement('div');
-                info.className = 'iframe-link';
-                info.textContent = iframeLink;
-                liCanal.appendChild(info);
-              });
+              aCanal.onclick = async (e) => {
+                e.preventDefault();
+                document.getElementById('iframe-link').innerText = 'Buscando link do canal...';
+
+                try {
+                  const apiUrl = `https://api.scraperapi.com?api_key=${apiKey}&url=${encodeURIComponent(href)}&render=true`;
+                  const res = await fetch(apiUrl);
+                  const text = await res.text();
+
+                  const tempPage = document.createElement('div');
+                  tempPage.innerHTML = text;
+                  const iframe = tempPage.querySelector('iframe');
+
+                  if (iframe && iframe.src) {
+                    document.getElementById('iframe-link').innerHTML = `<strong>Link do canal:</strong><br><a href="${iframe.src}" target="_blank">${iframe.src}</a>`;
+                  } else {
+                    document.getElementById('iframe-link').innerText = 'Iframe não encontrado.';
+                  }
+                } catch (err) {
+                  document.getElementById('iframe-link').innerText = 'Erro ao buscar o link.';
+                  console.error(err);
+                }
+              };
 
               liCanal.appendChild(aCanal);
               canaisUl.appendChild(liCanal);
