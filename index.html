@@ -40,7 +40,7 @@
     ul.menu > li:hover {
       box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     }
-    ul.menu > li > .titulo-evento {
+    .titulo-evento {
       color: #111;
       font-weight: 600;
       display: flex;
@@ -49,9 +49,8 @@
       font-size: 20px;
       letter-spacing: 0.03em;
       user-select: none;
-      cursor: default;
     }
-    ul.menu > li > .titulo-evento span.t {
+    .titulo-evento span.t {
       background-color: #007bff;
       color: #fff;
       font-weight: 700;
@@ -65,7 +64,6 @@
     ul.menu > li > ul {
       margin-top: 12px;
       padding-left: 0;
-      border-left: none;
       list-style: none;
     }
     ul.menu > li > ul > li {
@@ -92,103 +90,99 @@
   <div id="eventos">Carregando eventos...</div>
 
   <script>
+    const SCRAPER_API_KEY = 'f367a6108ce7e5f1fd57ef78c49bd671'; // ✅ Chave inserida
+
     function ajustarHorarioBrasil(horaMinuto) {
       if (!horaMinuto) return '';
+      const [h, m] = horaMinuto.split(':').map(Number);
+      const agora = new Date();
+      const dataOriginal = new Date(Date.UTC(
+        agora.getUTCFullYear(),
+        agora.getUTCMonth(),
+        agora.getUTCDate(),
+        h, m
+      ));
+      const fusoHorarioBrasilia = -3;
+      dataOriginal.setUTCHours(dataOriginal.getUTCHours() + fusoHorarioBrasilia);
+      return dataOriginal.toTimeString().slice(0, 5);
+    }
 
-      const [h, m] = horaMinuto.split(':').map(x => parseInt(x, 10));
-      if (isNaN(h) || isNaN(m)) return horaMinuto;
-
-      // Convertendo de GMT+2 (Europa) para GMT-3 (Brasil) → diferença de -5 horas
-      let horaBrasilia = h - 5;
-      if (horaBrasilia < 0) {
-        horaBrasilia += 24;
+    async function buscarIframe(url) {
+      const apiUrl = `https://api.scraperapi.com/?api_key=${SCRAPER_API_KEY}&url=${encodeURIComponent(url)}`;
+      try {
+        const res = await fetch(apiUrl);
+        const html = await res.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const iframe = doc.querySelector('iframe');
+        return iframe ? iframe.src : 'Link não encontrado';
+      } catch {
+        return 'Erro ao buscar link';
       }
-
-      const hh = horaBrasilia.toString().padStart(2, '0');
-      const mm = m.toString().padStart(2, '0');
-
-      return `${hh}:${mm}`;
     }
 
     async function carregarEventos() {
       const url = 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://todopelotatvhd.com/agenda');
+      const container = document.getElementById('eventos');
       try {
-        const response = await fetch(url);
-        const data = await response.json();
-        const html = data.contents;
-
+        const res = await fetch(url);
+        const data = await res.json();
         const temp = document.createElement('div');
-        temp.innerHTML = html;
-
-        const container = document.getElementById('eventos');
-        container.innerHTML = '';
+        temp.innerHTML = data.contents;
 
         const listaEventos = temp.querySelector('ul.menu');
-        if (!listaEventos) {
-          container.innerHTML = '<p>Nenhum evento encontrado.</p>';
-          return;
-        }
-
-        const eventos = Array.from(listaEventos.children);
-        if (eventos.length === 0) {
-          container.innerHTML = '<p>Nenhum evento encontrado.</p>';
-          return;
-        }
+        if (!listaEventos) return container.innerHTML = 'Nenhum evento encontrado.';
 
         const ul = document.createElement('ul');
         ul.className = 'menu';
 
-        eventos.forEach(evento => {
+        const eventos = Array.from(listaEventos.children);
+        for (const evento of eventos) {
           const linkPrincipal = evento.querySelector('a');
-          if (!linkPrincipal) return;
+          if (!linkPrincipal) continue;
 
-          const horarioSpan = linkPrincipal.querySelector('span.t');
-          const horarioOriginal = horarioSpan ? horarioSpan.textContent.trim() : '';
-          const horarioAjustado = ajustarHorarioBrasil(horarioOriginal);
-
-          let tituloCompleto = linkPrincipal.childNodes[0].textContent.trim();
-          tituloCompleto = tituloCompleto.replace(horarioOriginal, '').trim();
+          const horarioOriginal = linkPrincipal.querySelector('span.t')?.textContent.trim() || '';
+          const horario = ajustarHorarioBrasil(horarioOriginal);
+          let titulo = linkPrincipal.childNodes[0].textContent.replace(horarioOriginal, '').trim();
 
           const li = document.createElement('li');
-          li.className = evento.className;
-
           const tituloDiv = document.createElement('div');
           tituloDiv.className = 'titulo-evento';
-          tituloDiv.innerHTML = `${tituloCompleto} <span class="t">${horarioAjustado}</span>`;
+          tituloDiv.innerHTML = `${titulo} <span class="t">${horario}</span>`;
           li.appendChild(tituloDiv);
 
           const canaisUlOriginal = evento.querySelector('ul');
           if (canaisUlOriginal) {
             const canaisUl = document.createElement('ul');
-            canaisUl.style.marginTop = '10px';
-            canaisUl.style.paddingLeft = '0';
-            canaisUl.style.listStyle = 'none';
+            const canais = canaisUlOriginal.querySelectorAll('li.subitem1 a');
 
-            canaisUlOriginal.querySelectorAll('li.subitem1 a').forEach(canalA => {
-              let nomeCanal = canalA.childNodes[0].textContent.trim();
-              nomeCanal = nomeCanal.replace(/Calidad\s*\d+p/i, '').trim();
+            for (const canal of canais) {
+              const nome = canal.childNodes[0].textContent.trim().replace(/Calidad\s*\d+p/i, '');
+              const href = canal.href;
+
+              const iframeUrl = await buscarIframe(href);
 
               const liCanal = document.createElement('li');
               const aCanal = document.createElement('a');
-              aCanal.href = canalA.href;
+              aCanal.href = iframeUrl;
               aCanal.target = '_blank';
-              aCanal.textContent = nomeCanal;
-              liCanal.appendChild(aCanal);
+              aCanal.textContent = nome;
 
+              liCanal.appendChild(aCanal);
               canaisUl.appendChild(liCanal);
-            });
+            }
 
             li.appendChild(canaisUl);
           }
 
           ul.appendChild(li);
-        });
+        }
 
+        container.innerHTML = '';
         container.appendChild(ul);
-
       } catch (err) {
-        console.error('Erro ao carregar eventos:', err);
-        document.getElementById('eventos').innerText = 'Erro ao carregar eventos.';
+        console.error(err);
+        container.innerText = 'Erro ao carregar eventos.';
       }
     }
 
