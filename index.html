@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <title>Agenda Esportiva</title>
   <style>
-    /* (estilos iguais ao seu original, mantidos sem alterações) */
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: #e9ecef;
@@ -99,10 +98,16 @@
       const [h, m] = horaMinuto.split(':').map(x => parseInt(x, 10));
       if (isNaN(h) || isNaN(m)) return horaMinuto;
 
+      // Convertendo de GMT+2 para GMT-3 (Brasil) → diferença de -5 horas
       let horaBrasilia = h - 5;
-      if (horaBrasilia < 0) horaBrasilia += 24;
+      if (horaBrasilia < 0) {
+        horaBrasilia += 24;
+      }
 
-      return `${horaBrasilia.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+      const hh = horaBrasilia.toString().padStart(2, '0');
+      const mm = m.toString().padStart(2, '0');
+
+      return `${hh}:${mm}`;
     }
 
     async function carregarEventos() {
@@ -160,18 +165,21 @@
             canaisUl.style.listStyle = 'none';
 
             canaisUlOriginal.querySelectorAll('li.subitem1 a').forEach(canalA => {
-              const hrefOriginal = canalA.href;
-              const nomeCanalOriginal = canalA.childNodes[0].textContent.trim().replace(/Calidad\s*\d+p/i, '').trim();
+              let nomeCanal = canalA.childNodes[0].textContent.trim();
+              nomeCanal = nomeCanal.replace(/Calidad\s*\d+p/i, '').trim();
 
-              // 🔗 Corrige o domínio e cria o link para iframe.html
-              const linkIframe = `/iframe.html?link=${hrefOriginal}&canal=${encodeURIComponent(nomeCanalOriginal)}`;
+              // CORREÇÃO AQUI: força domínio original
+              let hrefOriginal = canalA.getAttribute('href');
+              if (hrefOriginal.startsWith('/')) {
+                hrefOriginal = 'https://todopelotatvhd.com' + hrefOriginal;
+              }
+
+              const linkIframe = `/iframe.html?link=${hrefOriginal}&canal=${encodeURIComponent(nomeCanal)}`;
 
               const liCanal = document.createElement('li');
               const aCanal = document.createElement('a');
               aCanal.href = linkIframe;
-              aCanal.target = '_blank';
-              aCanal.textContent = nomeCanalOriginal;
-
+              aCanal.textContent = nomeCanal;
               liCanal.appendChild(aCanal);
               canaisUl.appendChild(liCanal);
             });
