@@ -21,7 +21,6 @@
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,86,179,0.4);
       margin-bottom: 30px;
-      letter-spacing: 1.2px;
     }
     ul.menu {
       list-style: none;
@@ -35,55 +34,44 @@
       margin-bottom: 18px;
       box-shadow: 0 3px 8px rgba(0,0,0,0.08);
       padding: 18px 30px;
-      transition: box-shadow 0.3s ease;
     }
-    ul.menu > li:hover {
-      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-    }
-    ul.menu > li > .titulo-evento {
-      color: #111;
+    .titulo-evento {
+      font-size: 20px;
       font-weight: 600;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 20px;
-      letter-spacing: 0.03em;
-      user-select: none;
-      cursor: default;
+      margin-bottom: 10px;
     }
-    ul.menu > li > .titulo-evento span.t {
-      background-color: #007bff;
+    .titulo-evento .t {
+      background: #007bff;
       color: #fff;
-      font-weight: 700;
-      font-size: 14px;
       padding: 4px 10px;
       border-radius: 20px;
-      min-width: 60px;
-      text-align: center;
-      box-shadow: 0 2px 6px rgba(0,123,255,0.5);
+      font-size: 14px;
+      font-weight: 700;
     }
-    ul.menu > li > ul {
-      margin-top: 12px;
-      padding-left: 0;
-      border-left: none;
+    ul.menu ul {
       list-style: none;
+      padding-left: 0;
     }
-    ul.menu > li > ul > li {
-      margin-bottom: 4px;
+    ul.menu ul li {
+      margin-bottom: 6px;
     }
-    ul.menu > li > ul > li > a {
-      text-decoration: none;
+    ul.menu ul li a {
       color: #007bff;
-      font-weight: 500;
-      font-size: 16px;
-      display: block;
-      padding: 4px 0;
-      transition: color 0.2s ease;
-      border-radius: 6px;
+      text-decoration: none;
+      cursor: pointer;
     }
-    ul.menu > li > ul > li > a:hover {
-      color: #0056b3;
-      background-color: rgba(0, 123, 255, 0.1);
+    ul.menu ul li a:hover {
+      text-decoration: underline;
+    }
+    .iframe-link {
+      display: block;
+      font-size: 14px;
+      margin-top: 5px;
+      color: #333;
+      word-break: break-all;
     }
   </style>
 </head>
@@ -92,23 +80,7 @@
   <div id="eventos">Carregando eventos...</div>
 
   <script>
-    function ajustarHorarioBrasil(horaMinuto) {
-      if (!horaMinuto) return '';
-
-      const [h, m] = horaMinuto.split(':').map(x => parseInt(x, 10));
-      if (isNaN(h) || isNaN(m)) return horaMinuto;
-
-      // Convertendo de GMT+2 (Europa) para GMT-3 (Brasil) → diferença de -5 horas
-      let horaBrasilia = h - 5;
-      if (horaBrasilia < 0) {
-        horaBrasilia += 24;
-      }
-
-      const hh = horaBrasilia.toString().padStart(2, '0');
-      const mm = m.toString().padStart(2, '0');
-
-      return `${hh}:${mm}`;
-    }
+    const SCRAPER_API_KEY = 'f367a6108ce7e5f1fd57ef78c49bd671';
 
     async function carregarEventos() {
       const url = 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://todopelotatvhd.com/agenda');
@@ -120,64 +92,46 @@
         const temp = document.createElement('div');
         temp.innerHTML = html;
 
+        const eventos = temp.querySelectorAll('ul.menu > li');
         const container = document.getElementById('eventos');
         container.innerHTML = '';
-
-        const listaEventos = temp.querySelector('ul.menu');
-        if (!listaEventos) {
-          container.innerHTML = '<p>Nenhum evento encontrado.</p>';
-          return;
-        }
-
-        const eventos = Array.from(listaEventos.children);
-        if (eventos.length === 0) {
-          container.innerHTML = '<p>Nenhum evento encontrado.</p>';
-          return;
-        }
 
         const ul = document.createElement('ul');
         ul.className = 'menu';
 
         eventos.forEach(evento => {
-          const linkPrincipal = evento.querySelector('a');
-          if (!linkPrincipal) return;
-
-          const horarioSpan = linkPrincipal.querySelector('span.t');
-          const horarioOriginal = horarioSpan ? horarioSpan.textContent.trim() : '';
-          const horarioAjustado = ajustarHorarioBrasil(horarioOriginal);
-
-          let tituloCompleto = linkPrincipal.childNodes[0].textContent.trim();
-          tituloCompleto = tituloCompleto.replace(horarioOriginal, '').trim();
-
           const li = document.createElement('li');
-          li.className = evento.className;
+
+          const tituloLink = evento.querySelector('a');
+          const horarioSpan = tituloLink.querySelector('span.t');
+          const horario = horarioSpan ? horarioSpan.textContent : '';
+          const titulo = tituloLink.textContent.replace(horario, '').trim();
 
           const tituloDiv = document.createElement('div');
           tituloDiv.className = 'titulo-evento';
-          tituloDiv.innerHTML = `${tituloCompleto} <span class="t">${horarioAjustado}</span>`;
+          tituloDiv.innerHTML = `<span>${titulo}</span><span class="t">${horario}</span>`;
           li.appendChild(tituloDiv);
 
-          const canaisUlOriginal = evento.querySelector('ul');
-          if (canaisUlOriginal) {
+          const canais = evento.querySelectorAll('ul li.subitem1 a');
+          if (canais.length > 0) {
             const canaisUl = document.createElement('ul');
-            canaisUl.style.marginTop = '10px';
-            canaisUl.style.paddingLeft = '0';
-            canaisUl.style.listStyle = 'none';
-
-            canaisUlOriginal.querySelectorAll('li.subitem1 a').forEach(canalA => {
-              let nomeCanal = canalA.childNodes[0].textContent.trim();
-              nomeCanal = nomeCanal.replace(/Calidad\s*\d+p/i, '').trim();
-
-              const liCanal = document.createElement('li');
-              const aCanal = document.createElement('a');
-              aCanal.href = canalA.href;
-              aCanal.target = '_blank';
-              aCanal.textContent = nomeCanal;
-              liCanal.appendChild(aCanal);
-
-              canaisUl.appendChild(liCanal);
+            canais.forEach(canal => {
+              const canalLi = document.createElement('li');
+              const canalLink = document.createElement('a');
+              canalLink.textContent = canal.textContent.trim();
+              canalLink.href = '#';
+              canalLink.dataset.url = canal.href;
+              canalLink.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const iframeLink = await obterIframe(canal.href);
+                const linkDiv = document.createElement('div');
+                linkDiv.className = 'iframe-link';
+                linkDiv.textContent = iframeLink || 'Iframe não encontrado';
+                canalLi.appendChild(linkDiv);
+              });
+              canalLi.appendChild(canalLink);
+              canaisUl.appendChild(canalLi);
             });
-
             li.appendChild(canaisUl);
           }
 
@@ -185,10 +139,26 @@
         });
 
         container.appendChild(ul);
-
       } catch (err) {
         console.error('Erro ao carregar eventos:', err);
         document.getElementById('eventos').innerText = 'Erro ao carregar eventos.';
+      }
+    }
+
+    async function obterIframe(urlEmbed) {
+      try {
+        const apiUrl = `https://api.scraperapi.com/?api_key=${SCRAPER_API_KEY}&render=true&url=${encodeURIComponent(urlEmbed)}`;
+        const response = await fetch(apiUrl);
+        const html = await response.text();
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const iframe = doc.querySelector('iframe');
+
+        return iframe ? iframe.src : null;
+      } catch (e) {
+        console.error('Erro ao buscar iframe:', e);
+        return null;
       }
     }
 
