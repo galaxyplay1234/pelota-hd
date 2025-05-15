@@ -2,68 +2,192 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Agenda Esportiva</title>
-  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* (estilos iguais ao seu original, mantidos sem alterações) */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #e9ecef;
+      margin: 0;
+      padding: 20px;
+      color: #222;
+    }
+    header {
+      background: #0056b3;
+      color: #fff;
+      padding: 25px 20px;
+      text-align: center;
+      font-size: 28px;
+      font-weight: 700;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,86,179,0.4);
+      margin-bottom: 30px;
+      letter-spacing: 1.2px;
+    }
+    ul.menu {
+      list-style: none;
+      padding: 0;
+      max-width: 650px;
+      margin: 0 auto;
+    }
+    ul.menu > li {
+      background: #fff;
+      border-radius: 14px;
+      margin-bottom: 18px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+      padding: 18px 30px;
+      transition: box-shadow 0.3s ease;
+    }
+    ul.menu > li:hover {
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+    ul.menu > li > .titulo-evento {
+      color: #111;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 20px;
+      letter-spacing: 0.03em;
+      user-select: none;
+      cursor: default;
+    }
+    ul.menu > li > .titulo-evento span.t {
+      background-color: #007bff;
+      color: #fff;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      min-width: 60px;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0,123,255,0.5);
+    }
+    ul.menu > li > ul {
+      margin-top: 12px;
+      padding-left: 0;
+      border-left: none;
+      list-style: none;
+    }
+    ul.menu > li > ul > li {
+      margin-bottom: 4px;
+    }
+    ul.menu > li > ul > li > a {
+      text-decoration: none;
+      color: #007bff;
+      font-weight: 500;
+      font-size: 16px;
+      display: block;
+      padding: 4px 0;
+      transition: color 0.2s ease;
+      border-radius: 6px;
+    }
+    ul.menu > li > ul > li > a:hover {
+      color: #0056b3;
+      background-color: rgba(0, 123, 255, 0.1);
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Agenda Esportiva</h1>
-    <div id="eventos"></div>
-  </div>
+  <header>Agenda Esportiva</header>
+  <div id="eventos">Carregando eventos...</div>
 
   <script>
+    function ajustarHorarioBrasil(horaMinuto) {
+      if (!horaMinuto) return '';
+
+      const [h, m] = horaMinuto.split(':').map(x => parseInt(x, 10));
+      if (isNaN(h) || isNaN(m)) return horaMinuto;
+
+      let horaBrasilia = h - 5;
+      if (horaBrasilia < 0) horaBrasilia += 24;
+
+      return `${horaBrasilia.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+    }
+
     async function carregarEventos() {
-      const resposta = await fetch("/api");
-      const dados = await resposta.json();
-      const eventosDiv = document.getElementById("eventos");
+      const url = 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://todopelotatvhd.com/agenda');
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        const html = data.contents;
 
-      dados.forEach(grupo => {
-        const grupoDiv = document.createElement("div");
-        grupoDiv.classList.add("grupo");
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
 
-        const titulo = document.createElement("h2");
-        titulo.textContent = grupo.data;
-        grupoDiv.appendChild(titulo);
+        const container = document.getElementById('eventos');
+        container.innerHTML = '';
 
-        grupo.jogos.forEach(jogo => {
-          const jogoDiv = document.createElement("div");
-          jogoDiv.classList.add("jogo");
+        const listaEventos = temp.querySelector('ul.menu');
+        if (!listaEventos) {
+          container.innerHTML = '<p>Nenhum evento encontrado.</p>';
+          return;
+        }
 
-          const tituloJogo = document.createElement("h3");
-          tituloJogo.textContent = jogo.titulo;
-          jogoDiv.appendChild(tituloJogo);
+        const eventos = Array.from(listaEventos.children);
+        if (eventos.length === 0) {
+          container.innerHTML = '<p>Nenhum evento encontrado.</p>';
+          return;
+        }
 
-          const canaisDiv = document.createElement("div");
-          canaisDiv.classList.add("canais");
+        const ul = document.createElement('ul');
+        ul.className = 'menu';
 
-          jogo.canais.forEach(htmlCanal => {
-            const divTemp = document.createElement("div");
-            divTemp.innerHTML = htmlCanal;
-            const aTag = divTemp.querySelector("a");
+        eventos.forEach(evento => {
+          const linkPrincipal = evento.querySelector('a');
+          if (!linkPrincipal) return;
 
-            if (aTag) {
-              let nomeCanal = aTag.textContent.trim();
-              nomeCanal = nomeCanal.replace(/\s+Calidad.*$/, "");
+          const horarioSpan = linkPrincipal.querySelector('span.t');
+          const horarioOriginal = horarioSpan ? horarioSpan.textContent.trim() : '';
+          const horarioAjustado = ajustarHorarioBrasil(horarioOriginal);
 
-              // ⚠️ Substituir domínio PELOTA pelo original TODOPELOTA
-              const linkOriginal = aTag.href;
-              const linkCorrigido = linkOriginal.replace(/^https:\/\/[^\/]+/, 'https://todopelotatvhd.com');
+          let tituloCompleto = linkPrincipal.childNodes[0].textContent.trim();
+          tituloCompleto = tituloCompleto.replace(horarioOriginal, '').trim();
 
-              const novaTag = document.createElement("a");
-              novaTag.textContent = nomeCanal;
-              novaTag.href = `/iframe.html?link=${linkCorrigido}&canal=${encodeURIComponent(nomeCanal)}`;
-              novaTag.target = "_blank";
-              canaisDiv.appendChild(novaTag);
-            }
-          });
+          const li = document.createElement('li');
+          li.className = evento.className;
 
-          jogoDiv.appendChild(canaisDiv);
-          grupoDiv.appendChild(jogoDiv);
+          const tituloDiv = document.createElement('div');
+          tituloDiv.className = 'titulo-evento';
+          tituloDiv.innerHTML = `${tituloCompleto} <span class="t">${horarioAjustado}</span>`;
+          li.appendChild(tituloDiv);
+
+          const canaisUlOriginal = evento.querySelector('ul');
+          if (canaisUlOriginal) {
+            const canaisUl = document.createElement('ul');
+            canaisUl.style.marginTop = '10px';
+            canaisUl.style.paddingLeft = '0';
+            canaisUl.style.listStyle = 'none';
+
+            canaisUlOriginal.querySelectorAll('li.subitem1 a').forEach(canalA => {
+              const hrefOriginal = canalA.href;
+              const nomeCanalOriginal = canalA.childNodes[0].textContent.trim().replace(/Calidad\s*\d+p/i, '').trim();
+
+              // 🔗 Corrige o domínio e cria o link para iframe.html
+              const linkIframe = `/iframe.html?link=${hrefOriginal}&canal=${encodeURIComponent(nomeCanalOriginal)}`;
+
+              const liCanal = document.createElement('li');
+              const aCanal = document.createElement('a');
+              aCanal.href = linkIframe;
+              aCanal.target = '_blank';
+              aCanal.textContent = nomeCanalOriginal;
+
+              liCanal.appendChild(aCanal);
+              canaisUl.appendChild(liCanal);
+            });
+
+            li.appendChild(canaisUl);
+          }
+
+          ul.appendChild(li);
         });
 
-        eventosDiv.appendChild(grupoDiv);
-      });
+        container.appendChild(ul);
+
+      } catch (err) {
+        console.error('Erro ao carregar eventos:', err);
+        document.getElementById('eventos').innerText = 'Erro ao carregar eventos.';
+      }
     }
 
     carregarEventos();
