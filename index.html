@@ -21,6 +21,7 @@
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,86,179,0.4);
       margin-bottom: 30px;
+      letter-spacing: 1.2px;
     }
     ul.menu {
       list-style: none;
@@ -34,43 +35,55 @@
       margin-bottom: 18px;
       box-shadow: 0 3px 8px rgba(0,0,0,0.08);
       padding: 18px 30px;
+      transition: box-shadow 0.3s ease;
     }
-    .titulo-evento {
+    ul.menu > li:hover {
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+    ul.menu > li > .titulo-evento {
       color: #111;
       font-weight: 600;
       display: flex;
       justify-content: space-between;
+      align-items: center;
       font-size: 20px;
+      letter-spacing: 0.03em;
+      user-select: none;
+      cursor: default;
     }
-    .titulo-evento span.t {
+    ul.menu > li > .titulo-evento span.t {
       background-color: #007bff;
       color: #fff;
+      font-weight: 700;
       font-size: 14px;
       padding: 4px 10px;
       border-radius: 20px;
+      min-width: 60px;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0,123,255,0.5);
     }
-    ul.menu > li ul {
-      list-style: none;
-      margin-top: 10px;
+    ul.menu > li > ul {
+      margin-top: 12px;
       padding-left: 0;
+      border-left: none;
+      list-style: none;
     }
-    ul.menu > li ul li {
-      margin-bottom: 5px;
+    ul.menu > li > ul > li {
+      margin-bottom: 4px;
     }
-    ul.menu > li ul li a {
+    ul.menu > li > ul > li > a {
       text-decoration: none;
       color: #007bff;
       font-weight: 500;
-      cursor: pointer;
-    }
-    ul.menu > li ul li a:hover {
-      text-decoration: underline;
-    }
-    .iframe-link {
+      font-size: 16px;
       display: block;
-      font-size: 14px;
-      margin-top: 3px;
-      color: #555;
+      padding: 4px 0;
+      transition: color 0.2s ease;
+      border-radius: 6px;
+    }
+    ul.menu > li > ul > li > a:hover {
+      color: #0056b3;
+      background-color: rgba(0, 123, 255, 0.1);
     }
   </style>
 </head>
@@ -79,82 +92,90 @@
   <div id="eventos">Carregando eventos...</div>
 
   <script>
-    const SCRAPER_API_KEY = 'f367a6108ce7e5f1fd57ef78c49bd671';
-
     function ajustarHorarioBrasil(horaMinuto) {
       if (!horaMinuto) return '';
-      const [h, m] = horaMinuto.split(':').map(Number);
-      const agora = new Date();
-      const utc = new Date(Date.UTC(agora.getFullYear(), agora.getMonth(), agora.getDate(), h, m));
-      utc.setUTCHours(utc.getUTCHours() - 2); // Ajuste GMT+2 → GMT-3 (Brasília)
-      return utc.toTimeString().slice(0, 5);
-    }
 
-    async function buscarIframe(url) {
-      const apiUrl = `https://api.scraperapi.com/?api_key=${SCRAPER_API_KEY}&url=${encodeURIComponent(url)}`;
-      try {
-        const res = await fetch(apiUrl);
-        const html = await res.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        const iframe = doc.querySelector('iframe');
-        return iframe ? iframe.src : 'Link não encontrado';
-      } catch {
-        return 'Erro ao buscar link';
-      }
+      const [h, m] = horaMinuto.split(':').map(Number);
+      if (isNaN(h) || isNaN(m)) return horaMinuto;
+
+      const agora = new Date();
+      const eventoUTC = new Date(Date.UTC(
+        agora.getUTCFullYear(), 
+        agora.getUTCMonth(), 
+        agora.getUTCDate(), 
+        h, m
+      ));
+
+      // Ajustar para GMT-3 (Horário de Brasília)
+      const eventoBrasil = new Date(eventoUTC.getTime() - 3 * 60 * 60 * 1000);
+      const hh = eventoBrasil.getHours().toString().padStart(2, '0');
+      const mm = eventoBrasil.getMinutes().toString().padStart(2, '0');
+
+      return `${hh}:${mm}`;
     }
 
     async function carregarEventos() {
-      const container = document.getElementById('eventos');
+      const url = 'https://api.scraperapi.com/?api_key=f367a6108ce7e5f1fd57ef78c49bd671&url=https://todopelotatvhd.com/agenda';
+
       try {
-        const res = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent('https://todopelotatvhd.com/agenda'));
-        const data = await res.json();
+        const response = await fetch(url);
+        const html = await response.text();
+
         const temp = document.createElement('div');
-        temp.innerHTML = data.contents;
+        temp.innerHTML = html;
+
+        const container = document.getElementById('eventos');
+        container.innerHTML = '';
 
         const listaEventos = temp.querySelector('ul.menu');
-        if (!listaEventos) return container.innerHTML = 'Nenhum evento encontrado.';
+        if (!listaEventos) {
+          container.innerHTML = '<p>Nenhum evento encontrado.</p>';
+          return;
+        }
+
+        const eventos = Array.from(listaEventos.children);
+        if (eventos.length === 0) {
+          container.innerHTML = '<p>Nenhum evento encontrado.</p>';
+          return;
+        }
 
         const ul = document.createElement('ul');
         ul.className = 'menu';
 
-        const eventos = Array.from(listaEventos.children);
-        for (const evento of eventos) {
+        eventos.forEach(evento => {
           const linkPrincipal = evento.querySelector('a');
-          const horarioOriginal = linkPrincipal?.querySelector('span.t')?.textContent.trim() || '';
+          if (!linkPrincipal) return;
+
+          const horarioSpan = linkPrincipal.querySelector('span.t');
+          const horarioOriginal = horarioSpan ? horarioSpan.textContent.trim() : '';
           const horario = ajustarHorarioBrasil(horarioOriginal);
-          const titulo = linkPrincipal.childNodes[0].textContent.replace(horarioOriginal, '').trim();
+
+          let tituloCompleto = linkPrincipal.childNodes[0].textContent.trim();
+          tituloCompleto = tituloCompleto.replace(horarioOriginal, '').trim();
 
           const li = document.createElement('li');
+          li.className = evento.className;
+
           const tituloDiv = document.createElement('div');
           tituloDiv.className = 'titulo-evento';
-          tituloDiv.innerHTML = `${titulo} <span class="t">${horario}</span>`;
+          tituloDiv.innerHTML = `${tituloCompleto} <span class="t">${horario}</span>`;
           li.appendChild(tituloDiv);
 
           const canaisUlOriginal = evento.querySelector('ul');
           if (canaisUlOriginal) {
             const canaisUl = document.createElement('ul');
+            canaisUl.style.marginTop = '10px';
 
-            canaisUlOriginal.querySelectorAll('li.subitem1 a').forEach(canal => {
-              const nome = canal.childNodes[0].textContent.trim().replace(/Calidad\s*\d+p/i, '');
-              const href = canal.href;
+            canaisUlOriginal.querySelectorAll('li.subitem1 a').forEach(canalA => {
+              let nomeCanal = canalA.childNodes[0].textContent.trim();
+              nomeCanal = nomeCanal.replace(/Calidad\s*\d+p/i, '').trim();
 
               const liCanal = document.createElement('li');
-              const a = document.createElement('a');
-              a.textContent = nome;
-              a.href = '#';
-              a.onclick = async (e) => {
-                e.preventDefault();
-                a.textContent = `Buscando...`;
-                const finalLink = await buscarIframe(href);
-                a.textContent = nome;
-                const info = document.createElement('span');
-                info.className = 'iframe-link';
-                info.textContent = finalLink;
-                liCanal.appendChild(info);
-              };
-
-              liCanal.appendChild(a);
+              const aCanal = document.createElement('a');
+              aCanal.href = canalA.href;
+              aCanal.target = '_blank';
+              aCanal.textContent = nomeCanal;
+              liCanal.appendChild(aCanal);
               canaisUl.appendChild(liCanal);
             });
 
@@ -162,13 +183,13 @@
           }
 
           ul.appendChild(li);
-        }
+        });
 
-        container.innerHTML = '';
         container.appendChild(ul);
+
       } catch (err) {
-        console.error(err);
-        container.innerText = 'Erro ao carregar eventos.';
+        console.error('Erro ao carregar eventos:', err);
+        document.getElementById('eventos').innerText = 'Erro ao carregar eventos.';
       }
     }
 
