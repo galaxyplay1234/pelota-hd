@@ -95,15 +95,19 @@
     function ajustarHorarioBrasil(horaMinuto) {
       if (!horaMinuto) return '';
 
-      const [h, m] = horaMinuto.split(':').map(x => parseInt(x, 10));
+      const [h, m] = horaMinuto.split(':').map(Number);
       if (isNaN(h) || isNaN(m)) return horaMinuto;
 
-      const agora = new Date();
-      const dataUTC = new Date(Date.UTC(agora.getUTCFullYear(), agora.getUTCMonth(), agora.getUTCDate(), h, m));
-      const dataBrasil = new Date(dataUTC.getTime() - 3 * 60 * 60 * 1000);
+      // Horário original (do site) presumido como GMT-5
+      const original = new Date();
+      original.setUTCHours(h + 5); // converter GMT-5 para UTC
+      original.setUTCMinutes(m);
 
-      const hh = dataBrasil.getUTCHours().toString().padStart(2, '0');
-      const mm = dataBrasil.getUTCMinutes().toString().padStart(2, '0');
+      // Agora converte para horário de Brasília (GMT-3)
+      const brasil = new Date(original.getTime() + 3 * 60 * 60 * 1000);
+
+      const hh = brasil.getHours().toString().padStart(2, '0');
+      const mm = brasil.getMinutes().toString().padStart(2, '0');
 
       return `${hh}:${mm}`;
     }
@@ -128,6 +132,7 @@
         }
 
         const eventos = Array.from(listaEventos.children);
+
         if (eventos.length === 0) {
           container.innerHTML = '<p>Nenhum evento encontrado.</p>';
           return;
@@ -142,7 +147,7 @@
 
           const horarioSpan = linkPrincipal.querySelector('span.t');
           const horarioOriginal = horarioSpan ? horarioSpan.textContent.trim() : '';
-          const horario = ajustarHorarioBrasil(horarioOriginal);
+          const horarioAjustado = ajustarHorarioBrasil(horarioOriginal);
 
           let tituloCompleto = linkPrincipal.childNodes[0].textContent.trim();
           tituloCompleto = tituloCompleto.replace(horarioOriginal, '').trim();
@@ -152,7 +157,7 @@
 
           const tituloDiv = document.createElement('div');
           tituloDiv.className = 'titulo-evento';
-          tituloDiv.innerHTML = `${tituloCompleto} <span class="t">${horario}</span>`;
+          tituloDiv.innerHTML = `${tituloCompleto} <span class="t">${horarioAjustado}</span>`;
           li.appendChild(tituloDiv);
 
           const canaisUlOriginal = evento.querySelector('ul');
