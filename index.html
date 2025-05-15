@@ -95,19 +95,18 @@
     function ajustarHorarioBrasil(horaMinuto) {
       if (!horaMinuto) return '';
 
-      const [h, m] = horaMinuto.split(':').map(Number);
+      const [h, m] = horaMinuto.split(':').map(x => parseInt(x, 10));
       if (isNaN(h) || isNaN(m)) return horaMinuto;
 
-      // Horário original (do site) presumido como GMT-5
-      const original = new Date();
-      original.setUTCHours(h + 5); // converter GMT-5 para UTC
-      original.setUTCMinutes(m);
+      let horaBrasilia = h + 2;
+      let minutoBrasilia = m;
 
-      // Agora converte para horário de Brasília (GMT-3)
-      const brasil = new Date(original.getTime() + 3 * 60 * 60 * 1000);
+      if (horaBrasilia >= 24) {
+        horaBrasilia -= 24;
+      }
 
-      const hh = brasil.getHours().toString().padStart(2, '0');
-      const mm = brasil.getMinutes().toString().padStart(2, '0');
+      const hh = horaBrasilia.toString().padStart(2, '0');
+      const mm = minutoBrasilia.toString().padStart(2, '0');
 
       return `${hh}:${mm}`;
     }
@@ -147,7 +146,7 @@
 
           const horarioSpan = linkPrincipal.querySelector('span.t');
           const horarioOriginal = horarioSpan ? horarioSpan.textContent.trim() : '';
-          const horarioAjustado = ajustarHorarioBrasil(horarioOriginal);
+          const horario = ajustarHorarioBrasil(horarioOriginal);
 
           let tituloCompleto = linkPrincipal.childNodes[0].textContent.trim();
           tituloCompleto = tituloCompleto.replace(horarioOriginal, '').trim();
@@ -157,7 +156,7 @@
 
           const tituloDiv = document.createElement('div');
           tituloDiv.className = 'titulo-evento';
-          tituloDiv.innerHTML = `${tituloCompleto} <span class="t">${horarioAjustado}</span>`;
+          tituloDiv.innerHTML = `${tituloCompleto} <span class="t">${horario}</span>`;
           li.appendChild(tituloDiv);
 
           const canaisUlOriginal = evento.querySelector('ul');
