@@ -2,167 +2,112 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Agenda Esportiva</title>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #e9ecef;
+      font-family: 'Arial', sans-serif;
+      background-color: #111;
+      color: #fff;
       margin: 0;
       padding: 20px;
-      color: #222;
     }
-    header {
-      background: #0056b3;
-      color: #fff;
-      padding: 25px 20px;
+    h1 {
       text-align: center;
-      font-size: 28px;
-      font-weight: 700;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,86,179,0.4);
-      margin-bottom: 30px;
+      color: #4caf50;
     }
-    ul.menu {
+    ul {
       list-style: none;
       padding: 0;
-      max-width: 650px;
-      margin: 0 auto;
     }
-    ul.menu > li {
-      background: #fff;
-      border-radius: 14px;
-      margin-bottom: 18px;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.08);
-      padding: 18px 30px;
-    }
-    .titulo-evento {
-      font-size: 20px;
-      font-weight: 600;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    li {
+      background: #1e1e1e;
       margin-bottom: 10px;
+      padding: 15px;
+      border-radius: 8px;
     }
-    .titulo-evento .t {
-      background: #007bff;
-      color: #fff;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 14px;
-      font-weight: 700;
+    .event-time {
+      font-weight: bold;
+      color: #ff9800;
     }
-    ul.menu ul {
-      list-style: none;
-      padding-left: 0;
-    }
-    ul.menu ul li {
-      margin-bottom: 6px;
-    }
-    ul.menu ul li a {
-      color: #007bff;
-      text-decoration: none;
+    .channel {
+      color: #03a9f4;
       cursor: pointer;
-    }
-    ul.menu ul li a:hover {
-      text-decoration: underline;
+      margin: 5px 0;
+      display: block;
     }
     .iframe-link {
-      display: block;
-      font-size: 14px;
+      font-size: 0.9em;
+      color: #a2ffa2;
+      word-wrap: break-word;
       margin-top: 5px;
-      color: #333;
-      word-break: break-all;
     }
   </style>
 </head>
 <body>
-  <header>Agenda Esportiva</header>
-  <div id="eventos">Carregando eventos...</div>
+  <h1>Agenda Esportiva</h1>
+  <ul id="event-list">Carregando eventos...</ul>
 
   <script>
-    const SCRAPER_API_KEY = 'f367a6108ce7e5f1fd57ef78c49bd671';
-
-    async function carregarEventos() {
-      const url = 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://todopelotatvhd.com/agenda');
+    async function getEvents() {
       try {
-        const response = await fetch(url);
+        const response = await fetch("https://pelota-api.netlify.app/.netlify/functions/events");
         const data = await response.json();
-        const html = data.contents;
-
-        const temp = document.createElement('div');
-        temp.innerHTML = html;
-
-        const eventos = temp.querySelectorAll('ul.menu > li');
-        const container = document.getElementById('eventos');
-        container.innerHTML = '';
-
-        const ul = document.createElement('ul');
-        ul.className = 'menu';
-
-        eventos.forEach(evento => {
-          const li = document.createElement('li');
-
-          const tituloLink = evento.querySelector('a');
-          const horarioSpan = tituloLink.querySelector('span.t');
-          const horario = horarioSpan ? horarioSpan.textContent : '';
-          const titulo = tituloLink.textContent.replace(horario, '').trim();
-
-          const tituloDiv = document.createElement('div');
-          tituloDiv.className = 'titulo-evento';
-          tituloDiv.innerHTML = `<span>${titulo}</span><span class="t">${horario}</span>`;
-          li.appendChild(tituloDiv);
-
-          const canais = evento.querySelectorAll('ul li.subitem1 a');
-          if (canais.length > 0) {
-            const canaisUl = document.createElement('ul');
-            canais.forEach(canal => {
-              const canalLi = document.createElement('li');
-              const canalLink = document.createElement('a');
-              canalLink.textContent = canal.textContent.trim();
-              canalLink.href = '#';
-              canalLink.dataset.url = canal.href;
-              canalLink.addEventListener('click', async (e) => {
-                e.preventDefault();
-                const iframeLink = await obterIframe(canal.href);
-                const linkDiv = document.createElement('div');
-                linkDiv.className = 'iframe-link';
-                linkDiv.textContent = iframeLink || 'Iframe não encontrado';
-                canalLi.appendChild(linkDiv);
-              });
-              canalLi.appendChild(canalLink);
-              canaisUl.appendChild(canalLi);
-            });
-            li.appendChild(canaisUl);
-          }
-
-          ul.appendChild(li);
-        });
-
-        container.appendChild(ul);
-      } catch (err) {
-        console.error('Erro ao carregar eventos:', err);
-        document.getElementById('eventos').innerText = 'Erro ao carregar eventos.';
+        renderEvents(data);
+      } catch (error) {
+        document.getElementById("event-list").innerHTML = "Erro ao carregar eventos.";
       }
     }
 
-    async function obterIframe(urlEmbed) {
+    function renderEvents(events) {
+      const eventList = document.getElementById("event-list");
+      eventList.innerHTML = "";
+
+      events.forEach(event => {
+        const li = document.createElement("li");
+
+        const title = document.createElement("div");
+        title.innerHTML = `<span class="event-time">${event.time}</span> - ${event.title}`;
+        li.appendChild(title);
+
+        event.channels.forEach(channel => {
+          const channelLink = document.createElement("span");
+          channelLink.className = "channel";
+          channelLink.textContent = channel.name;
+          channelLink.dataset.url = channel.url;
+
+          channelLink.addEventListener("click", async () => {
+            const existing = channelLink.nextElementSibling;
+            if (existing && existing.classList.contains("iframe-link")) return;
+
+            const iframeUrl = await getIframeUrl(channel.url);
+            const iframeEl = document.createElement("div");
+            iframeEl.className = "iframe-link";
+            iframeEl.textContent = iframeUrl || "Iframe não encontrado";
+            channelLink.insertAdjacentElement("afterend", iframeEl);
+          });
+
+          li.appendChild(channelLink);
+        });
+
+        eventList.appendChild(li);
+      });
+    }
+
+    async function getIframeUrl(encodedUrl) {
       try {
-        const apiUrl = `https://api.scraperapi.com/?api_key=${SCRAPER_API_KEY}&render=true&url=${encodeURIComponent(urlEmbed)}`;
-        const response = await fetch(apiUrl);
-        const html = await response.text();
+        const scraperUrl = "https://api.scraperapi.com/?api_key=f367a6108ce7e5f1fd57ef78c49bd671&render=true&url=" + encodeURIComponent(encodedUrl);
+        const res = await fetch(scraperUrl);
+        const html = await res.text();
 
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        const iframe = doc.querySelector('iframe');
-
-        return iframe ? iframe.src : null;
+        const match = html.match(/https:\/\/streamtp4\.com\/global1\.php\?stream=[a-zA-Z0-9_]+/);
+        return match ? match[0] : null;
       } catch (e) {
-        console.error('Erro ao buscar iframe:', e);
         return null;
       }
     }
 
-    carregarEventos();
+    getEvents();
   </script>
 </body>
 </html>
