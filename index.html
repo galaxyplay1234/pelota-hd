@@ -69,21 +69,29 @@
       list-style: none;
     }
     ul.menu > li > ul > li {
-      margin-bottom: 4px;
+      margin-bottom: 6px;
     }
     ul.menu > li > ul > li > a {
       text-decoration: none;
       color: #007bff;
       font-weight: 500;
       font-size: 16px;
-      display: block;
+      display: inline-block;
       padding: 4px 0;
-      transition: color 0.2s ease;
       border-radius: 6px;
+      cursor: pointer;
     }
     ul.menu > li > ul > li > a:hover {
       color: #0056b3;
-      background-color: rgba(0, 123, 255, 0.1);
+    }
+    .iframe-link {
+      font-size: 13px;
+      color: #111;
+      background: #f1f3f5;
+      padding: 6px 10px;
+      margin-top: 4px;
+      border-radius: 6px;
+      word-break: break-all;
     }
   </style>
 </head>
@@ -94,32 +102,38 @@
   <script>
     function ajustarHorarioBrasil(horaMinuto) {
       if (!horaMinuto) return '';
-
-      const [h, m] = horaMinuto.split(':').map(Number);
+      const [h, m] = horaMinuto.split(':').map(x => parseInt(x, 10));
       if (isNaN(h) || isNaN(m)) return horaMinuto;
-
       const agora = new Date();
-      const eventoUTC = new Date(Date.UTC(
-        agora.getUTCFullYear(), 
-        agora.getUTCMonth(), 
-        agora.getUTCDate(), 
-        h, m
-      ));
-
-      // Ajustar para GMT-3 (Horário de Brasília)
-      const eventoBrasil = new Date(eventoUTC.getTime() - 3 * 60 * 60 * 1000);
-      const hh = eventoBrasil.getHours().toString().padStart(2, '0');
-      const mm = eventoBrasil.getMinutes().toString().padStart(2, '0');
-
+      const dataUTC = new Date(Date.UTC(agora.getUTCFullYear(), agora.getUTCMonth(), agora.getUTCDate(), h, m));
+      const dataBR = new Date(dataUTC.getTime() - 3 * 60 * 60 * 1000); // GMT-3 (Brasília)
+      const hh = dataBR.getHours().toString().padStart(2, '0');
+      const mm = dataBR.getMinutes().toString().padStart(2, '0');
       return `${hh}:${mm}`;
     }
 
-    async function carregarEventos() {
-      const url = 'https://api.scraperapi.com/?api_key=f367a6108ce7e5f1fd57ef78c49bd671&url=https://todopelotatvhd.com/agenda';
+    async function buscarIframeSrc(link) {
+      const apiKey = 'f367a6108ce7e5f1fd57ef78c49bd671';
+      const apiUrl = `https://api.scraperapi.com?api_key=${apiKey}&url=${encodeURIComponent(link)}`;
+      try {
+        const res = await fetch(apiUrl);
+        const html = await res.text();
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+        const iframe = temp.querySelector('iframe');
+        return iframe ? iframe.src : 'iframe não encontrado';
+      } catch (err) {
+        console.error('Erro ao buscar iframe:', err);
+        return 'Erro ao buscar iframe';
+      }
+    }
 
+    async function carregarEventos() {
+      const url = 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://todopelotatvhd.com/agenda');
       try {
         const response = await fetch(url);
-        const html = await response.text();
+        const data = await response.json();
+        const html = data.contents;
 
         const temp = document.createElement('div');
         temp.innerHTML = html;
@@ -172,9 +186,20 @@
 
               const liCanal = document.createElement('li');
               const aCanal = document.createElement('a');
-              aCanal.href = canalA.href;
-              aCanal.target = '_blank';
               aCanal.textContent = nomeCanal;
+              aCanal.href = "#";
+              aCanal.addEventListener('click', async (e) => {
+                e.preventDefault();
+                aCanal.textContent = `Buscando iframe de ${nomeCanal}...`;
+                const iframeLink = await buscarIframeSrc(canalA.href);
+                aCanal.textContent = nomeCanal;
+
+                const info = document.createElement('div');
+                info.className = 'iframe-link';
+                info.textContent = iframeLink;
+                liCanal.appendChild(info);
+              });
+
               liCanal.appendChild(aCanal);
               canaisUl.appendChild(liCanal);
             });
