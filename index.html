@@ -1,215 +1,107 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Agenda Esportiva</title>
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #e9ecef;
-      margin: 0;
-      padding: 20px;
-      color: #222;
-    }
-    header {
-      background: #0056b3;
-      color: #fff;
-      padding: 25px 20px;
-      text-align: center;
-      font-size: 28px;
-      font-weight: 700;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,86,179,0.4);
-      margin-bottom: 30px;
-      letter-spacing: 1.2px;
-    }
-    ul.menu {
-      list-style: none;
-      padding: 0;
-      max-width: 650px;
-      margin: 0 auto;
-    }
-    ul.menu > li {
-      background: #fff;
-      border-radius: 14px;
-      margin-bottom: 18px;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.08);
-      padding: 18px 30px;
-      transition: box-shadow 0.3s ease;
-    }
-    ul.menu > li:hover {
-      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-    }
-    ul.menu > li > .titulo-evento {
-      color: #111;
-      font-weight: 600;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 20px;
-      letter-spacing: 0.03em;
-      user-select: none;
-      cursor: default;
-    }
-    ul.menu > li > .titulo-evento span.t {
-      background-color: #007bff;
-      color: #fff;
-      font-weight: 700;
-      font-size: 14px;
-      padding: 4px 10px;
-      border-radius: 20px;
-      min-width: 60px;
-      text-align: center;
-      box-shadow: 0 2px 6px rgba(0,123,255,0.5);
-    }
-    ul.menu > li > ul {
-      margin-top: 12px;
-      padding-left: 0;
-      list-style: none;
-    }
-    ul.menu > li > ul > li {
-      margin-bottom: 4px;
-    }
-    ul.menu > li > ul > li > a {
-      text-decoration: none;
-      color: #007bff;
-      font-weight: 500;
-      font-size: 16px;
-      display: block;
-      padding: 4px 0;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    ul.menu > li > ul > li > a:hover {
-      color: #0056b3;
-      background-color: rgba(0, 123, 255, 0.1);
-    }
-    #iframe-link {
-      margin-top: 20px;
-      text-align: center;
-      font-size: 16px;
-      word-break: break-all;
-      background: #fff;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      max-width: 90%;
-      margin-left: auto;
-      margin-right: auto;
-    }
+    body { font-family: Arial, sans-serif; background: #f8f9fa; margin: 0; padding: 20px; }
+    header { background: #343a40; color: white; padding: 20px; text-align: center; font-size: 28px; }
+    ul.menu { list-style: none; padding: 0; max-width: 700px; margin: 0 auto; }
+    li { background: white; padding: 15px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .titulo-evento { font-size: 18px; font-weight: bold; margin-bottom: 10px; display: flex; justify-content: space-between; }
+    .iframe-link { margin-top: 10px; font-size: 14px; word-break: break-all; color: green; }
+    li ul { padding-left: 15px; }
+    li ul li a { text-decoration: none; color: #007bff; }
   </style>
 </head>
 <body>
   <header>Agenda Esportiva</header>
   <div id="eventos">Carregando eventos...</div>
-  <div id="iframe-link"></div>
 
   <script>
-    const apiKey = 'f367a6108ce7e5f1fd57ef78c49bd671'; // SUA CHAVE ScraperAPI
+    const SCRAPER_API_KEY = 'f367a6108ce7e5f1fd57ef78c49bd671';
 
     function ajustarHorarioBrasil(horaMinuto) {
       if (!horaMinuto) return '';
-      const [h, m] = horaMinuto.split(':').map(x => parseInt(x, 10));
+      const [h, m] = horaMinuto.split(':').map(n => parseInt(n));
       if (isNaN(h) || isNaN(m)) return horaMinuto;
 
-      const data = new Date();
-      data.setUTCHours(h, m, 0, 0);
-      data.setHours(data.getHours() - 2); // Ajuste para GMT-3
+      const dataUTC = new Date(Date.UTC(2020, 0, 1, h, m)); // data fictícia
+      const offset = -3; // GMT-3
+      dataUTC.setHours(dataUTC.getHours() + offset);
 
-      const hh = data.getHours().toString().padStart(2, '0');
-      const mm = data.getMinutes().toString().padStart(2, '0');
-      return `${hh}:${mm}`;
+      return dataUTC.getHours().toString().padStart(2, '0') + ':' +
+             dataUTC.getMinutes().toString().padStart(2, '0');
+    }
+
+    async function extrairIframe(urlCanal) {
+      const url = `https://api.scraperapi.com/?api_key=${SCRAPER_API_KEY}&render=true&wait=4000&url=${encodeURIComponent(urlCanal)}`;
+      const resp = await fetch(url);
+      const html = await resp.text();
+      const match = html.match(/<iframe[^>]+src="([^"]+)"/i);
+      return match ? match[1] : 'Não encontrado';
     }
 
     async function carregarEventos() {
       const url = 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://todopelotatvhd.com/agenda');
       try {
-        const response = await fetch(url);
-        const data = await response.json();
+        const res = await fetch(url);
+        const data = await res.json();
         const html = data.contents;
 
         const temp = document.createElement('div');
         temp.innerHTML = html;
 
-        const container = document.getElementById('eventos');
-        container.innerHTML = '';
-
         const listaEventos = temp.querySelector('ul.menu');
-        if (!listaEventos) {
-          container.innerHTML = '<p>Nenhum evento encontrado.</p>';
-          return;
-        }
+        if (!listaEventos) return document.getElementById('eventos').innerHTML = 'Nenhum evento.';
+
+        const eventos = listaEventos.querySelectorAll('li');
 
         const ul = document.createElement('ul');
         ul.className = 'menu';
 
-        Array.from(listaEventos.children).forEach(evento => {
-          const linkPrincipal = evento.querySelector('a');
-          if (!linkPrincipal) return;
-
-          const horarioSpan = linkPrincipal.querySelector('span.t');
-          const horarioOriginal = horarioSpan ? horarioSpan.textContent.trim() : '';
-          const horario = ajustarHorarioBrasil(horarioOriginal);
-
-          let tituloCompleto = linkPrincipal.childNodes[0].textContent.trim();
-          tituloCompleto = tituloCompleto.replace(horarioOriginal, '').trim();
-
+        eventos.forEach(evento => {
           const li = document.createElement('li');
+          const a = evento.querySelector('a');
+          const span = a?.querySelector('span.t');
+          const hora = span ? ajustarHorarioBrasil(span.textContent.trim()) : '';
+          const titulo = a ? a.childNodes[0].textContent.trim().replace(span?.textContent || '', '').trim() : 'Evento';
+
           const tituloDiv = document.createElement('div');
           tituloDiv.className = 'titulo-evento';
-          tituloDiv.innerHTML = `${tituloCompleto} <span class="t">${horario}</span>`;
+          tituloDiv.innerHTML = `${titulo} <span>${hora}</span>`;
           li.appendChild(tituloDiv);
 
-          const canaisUlOriginal = evento.querySelector('ul');
-          if (canaisUlOriginal) {
-            const canaisUl = document.createElement('ul');
-
-            canaisUlOriginal.querySelectorAll('li.subitem1 a').forEach(canalA => {
-              const nomeCanal = canalA.childNodes[0].textContent.replace(/Calidad\s*\d+p/i, '').trim();
-              const href = canalA.href;
-
-              const liCanal = document.createElement('li');
+          const sublinks = evento.querySelectorAll('li.subitem1 a');
+          if (sublinks.length) {
+            const ulCanais = document.createElement('ul');
+            sublinks.forEach(link => {
+              const canalLi = document.createElement('li');
               const aCanal = document.createElement('a');
-              aCanal.textContent = nomeCanal;
-
+              aCanal.href = '#';
+              aCanal.textContent = link.textContent.trim().replace(/Calidad \d+p/i, '').trim();
               aCanal.onclick = async (e) => {
                 e.preventDefault();
-                document.getElementById('iframe-link').innerText = 'Buscando link do canal...';
-
-                try {
-                  const apiUrl = `https://api.scraperapi.com?api_key=${apiKey}&url=${encodeURIComponent(href)}&render=true`;
-                  const res = await fetch(apiUrl);
-                  const text = await res.text();
-
-                  const tempPage = document.createElement('div');
-                  tempPage.innerHTML = text;
-                  const iframe = tempPage.querySelector('iframe');
-
-                  if (iframe && iframe.src) {
-                    document.getElementById('iframe-link').innerHTML = `<strong>Link do canal:</strong><br><a href="${iframe.src}" target="_blank">${iframe.src}</a>`;
-                  } else {
-                    document.getElementById('iframe-link').innerText = 'Iframe não encontrado.';
-                  }
-                } catch (err) {
-                  document.getElementById('iframe-link').innerText = 'Erro ao buscar o link.';
-                  console.error(err);
-                }
+                aCanal.textContent = '🔎 Buscando link...';
+                const iframeLink = await extrairIframe(link.href);
+                const divIframe = document.createElement('div');
+                divIframe.className = 'iframe-link';
+                divIframe.textContent = iframeLink;
+                canalLi.appendChild(divIframe);
+                aCanal.textContent = link.textContent.trim();
               };
-
-              liCanal.appendChild(aCanal);
-              canaisUl.appendChild(liCanal);
+              canalLi.appendChild(aCanal);
+              ulCanais.appendChild(canalLi);
             });
-
-            li.appendChild(canaisUl);
+            li.appendChild(ulCanais);
           }
 
           ul.appendChild(li);
         });
 
-        container.appendChild(ul);
-
-      } catch (err) {
-        console.error('Erro ao carregar eventos:', err);
+        document.getElementById('eventos').innerHTML = '';
+        document.getElementById('eventos').appendChild(ul);
+      } catch (e) {
         document.getElementById('eventos').innerText = 'Erro ao carregar eventos.';
       }
     }
