@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <title>Agenda Esportiva</title>
   <style>
-    /* [estilos originais mantidos] */
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: #e9ecef;
@@ -116,19 +115,30 @@
         container.innerHTML = '';
 
         const listaEventos = temp.querySelector('ul.menu');
-        if (!listaEventos) return container.innerHTML = '<p>Nenhum evento encontrado.</p>';
+        if (!listaEventos) {
+          container.innerHTML = '<p>Nenhum evento encontrado.</p>';
+          return;
+        }
+
+        const eventos = Array.from(listaEventos.children);
+        if (eventos.length === 0) {
+          container.innerHTML = '<p>Nenhum evento encontrado.</p>';
+          return;
+        }
 
         const ul = document.createElement('ul');
         ul.className = 'menu';
 
-        Array.from(listaEventos.children).forEach(evento => {
+        eventos.forEach(evento => {
           const linkPrincipal = evento.querySelector('a');
           if (!linkPrincipal) return;
 
           const horarioSpan = linkPrincipal.querySelector('span.t');
           const horarioOriginal = horarioSpan ? horarioSpan.textContent.trim() : '';
           const horarioAjustado = ajustarHorarioBrasil(horarioOriginal);
-          let tituloCompleto = linkPrincipal.childNodes[0].textContent.trim().replace(horarioOriginal, '').trim();
+
+          let tituloCompleto = linkPrincipal.childNodes[0].textContent.trim();
+          tituloCompleto = tituloCompleto.replace(horarioOriginal, '').trim();
 
           const li = document.createElement('li');
           li.className = evento.className;
@@ -146,17 +156,18 @@
             canaisUl.style.listStyle = 'none';
 
             canaisUlOriginal.querySelectorAll('li.subitem1 a').forEach(canalA => {
-              let nomeCanal = canalA.childNodes[0].textContent.trim().replace(/Calidad\s*\d+p/i, '').trim();
-              const canalUrl = canalA.href;
-
-              const finalUrl = `iframe.html?url=${encodeURIComponent(canalUrl)}&nome=${encodeURIComponent(nomeCanal)}`;
+              let nomeCanal = canalA.childNodes[0].textContent.trim();
+              nomeCanal = nomeCanal.replace(/Calidad\s*\d+p/i, '').trim();
+              const linkOriginal = canalA.href;
 
               const liCanal = document.createElement('li');
               const aCanal = document.createElement('a');
-              aCanal.href = finalUrl;
-              aCanal.textContent = nomeCanal;
-              liCanal.appendChild(aCanal);
 
+              // Direcionar para a página iframe.html com o link direto como parâmetro (sem codificação)
+              aCanal.href = `iframe.html?link=${linkOriginal}&canal=${encodeURIComponent(nomeCanal)}`;
+              aCanal.textContent = nomeCanal;
+
+              liCanal.appendChild(aCanal);
               canaisUl.appendChild(liCanal);
             });
 
@@ -167,6 +178,7 @@
         });
 
         container.appendChild(ul);
+
       } catch (err) {
         console.error('Erro ao carregar eventos:', err);
         document.getElementById('eventos').innerText = 'Erro ao carregar eventos.';
