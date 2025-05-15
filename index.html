@@ -5,7 +5,7 @@
   <title>Agenda Esportiva</title>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Segoe UI', sans-serif;
       background: #e9ecef;
       margin: 0;
       padding: 20px;
@@ -14,10 +14,10 @@
     header {
       background: #0056b3;
       color: #fff;
-      padding: 25px 20px;
+      padding: 25px;
       text-align: center;
       font-size: 28px;
-      font-weight: 700;
+      font-weight: bold;
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,86,179,0.4);
       margin-bottom: 30px;
@@ -25,7 +25,7 @@
     ul.menu {
       list-style: none;
       padding: 0;
-      max-width: 650px;
+      max-width: 700px;
       margin: 0 auto;
     }
     ul.menu > li {
@@ -36,39 +36,35 @@
       padding: 18px 30px;
     }
     .titulo-evento {
-      font-weight: 600;
       font-size: 20px;
+      font-weight: bold;
       margin-bottom: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
     }
-    .titulo-evento span.t {
-      background-color: #007bff;
+    span.t {
+      background: #007bff;
       color: #fff;
-      font-weight: 700;
-      font-size: 14px;
       padding: 4px 10px;
       border-radius: 20px;
+      margin-left: 10px;
+      font-size: 14px;
     }
-    ul.menu > li > ul {
-      list-style: none;
-      padding: 0;
-      margin-top: 10px;
-    }
-    ul.menu > li > ul > li {
-      margin-bottom: 6px;
-    }
-    ul.menu > li > ul > li > a {
+    ul li ul li a {
+      display: block;
       color: #007bff;
+      text-decoration: none;
+      font-weight: 500;
+      padding: 6px 0;
       cursor: pointer;
+    }
+    ul li ul li a:hover {
       text-decoration: underline;
     }
     .iframe-link {
-      margin-top: 5px;
+      display: block;
+      margin-top: 4px;
       font-size: 14px;
-      color: #444;
-      word-break: break-all;
+      color: #555;
+      word-wrap: break-word;
     }
   </style>
 </head>
@@ -77,25 +73,19 @@
   <div id="eventos">Carregando eventos...</div>
 
   <script>
-    const SCRAPER_API_KEY = 'f367a6108ce7e5f1fd57ef78c49bd671';
-
-    async function fetchIframeLink(url) {
+    async function fetchIframeSrc(urlBase64) {
+      const fullUrl = 'https://todopelotatvhd.com/embed/eventos.html?r=' + urlBase64;
+      const apiUrl = 'https://api.scraperapi.com/?api_key=f367a6108ce7e5f1fd57ef78c49bd671&render=true&url=' + encodeURIComponent(fullUrl);
       try {
-        const encodedURL = `https://api.scraperapi.com/?api_key=${SCRAPER_API_KEY}&render=true&url=${encodeURIComponent(url)}`;
-        const response = await fetch(encodedURL);
-        const text = await response.text();
-
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(text, 'text/html');
-
-        const iframe = doc.querySelector('iframe');
-        if (iframe && iframe.src) {
-          return iframe.src;
-        } else {
-          return 'iframe não encontrado';
-        }
-      } catch (error) {
-        return 'erro ao buscar iframe';
+        const res = await fetch(apiUrl);
+        const html = await res.text();
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+        const iframe = temp.querySelector('iframe');
+        return iframe ? iframe.src : null;
+      } catch (e) {
+        console.error("Erro ao buscar iframe:", e);
+        return null;
       }
     }
 
@@ -105,7 +95,6 @@
         const response = await fetch(url);
         const data = await response.json();
         const html = data.contents;
-
         const temp = document.createElement('div');
         temp.innerHTML = html;
 
@@ -118,49 +107,44 @@
           return;
         }
 
+        const eventos = Array.from(listaEventos.children);
         const ul = document.createElement('ul');
         ul.className = 'menu';
 
-        Array.from(listaEventos.children).forEach(evento => {
-          const li = document.createElement('li');
-
+        eventos.forEach(evento => {
           const linkPrincipal = evento.querySelector('a');
-          const spanHora = linkPrincipal.querySelector('span.t');
-          const hora = spanHora ? spanHora.textContent.trim() : '';
+          const horarioSpan = linkPrincipal.querySelector('span.t');
+          const horario = horarioSpan ? horarioSpan.textContent.trim() : '';
+          let titulo = linkPrincipal.childNodes[0].textContent.trim().replace(horario, '').trim();
 
-          let titulo = linkPrincipal.childNodes[0].textContent.trim().replace(hora, '').trim();
-
+          const li = document.createElement('li');
           const tituloDiv = document.createElement('div');
           tituloDiv.className = 'titulo-evento';
-          tituloDiv.innerHTML = `<span>${titulo}</span><span class="t">${hora}</span>`;
+          tituloDiv.innerHTML = `${titulo} <span class="t">${horario}</span>`;
           li.appendChild(tituloDiv);
 
           const canaisUlOriginal = evento.querySelector('ul');
           if (canaisUlOriginal) {
             const canaisUl = document.createElement('ul');
 
-            canaisUlOriginal.querySelectorAll('a').forEach(canalA => {
-              const nomeCanal = canalA.childNodes[0].textContent.trim();
-              const href = canalA.href;
-
+            canaisUlOriginal.querySelectorAll('li.subitem1 a').forEach(canalA => {
               const canalLi = document.createElement('li');
-              const canalLink = document.createElement('a');
-              canalLink.textContent = nomeCanal;
-              canalLink.href = 'javascript:void(0)';
-              canalLink.addEventListener('click', async () => {
-                canalLink.textContent = `${nomeCanal} (carregando...)`;
+              const link = document.createElement('a');
+              const nome = canalA.textContent.trim().replace(/Calidad\s*\d+p/i, '').trim();
+              link.textContent = nome;
+              link.href = "#";
+              link.onclick = async (e) => {
+                e.preventDefault();
+                if (canalLi.querySelector('.iframe-link')) return;
 
-                const iframeLink = await fetchIframeLink(href);
-
-                canalLink.textContent = nomeCanal;
-
+                const base64 = new URL(canalA.href).searchParams.get('r');
+                const iframeUrl = await fetchIframeSrc(base64);
                 const iframeDisplay = document.createElement('div');
                 iframeDisplay.className = 'iframe-link';
-                iframeDisplay.textContent = iframeLink;
+                iframeDisplay.textContent = iframeUrl || 'Iframe não encontrado.';
                 canalLi.appendChild(iframeDisplay);
-              });
-
-              canalLi.appendChild(canalLink);
+              };
+              canalLi.appendChild(link);
               canaisUl.appendChild(canalLi);
             });
 
@@ -172,8 +156,8 @@
 
         container.appendChild(ul);
       } catch (err) {
-        document.getElementById('eventos').innerText = 'Erro ao carregar eventos.';
-        console.error(err);
+        console.error('Erro ao carregar eventos:', err);
+        document.getElementById('eventos').textContent = 'Erro ao carregar eventos.';
       }
     }
 
