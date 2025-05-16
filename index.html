@@ -3,32 +3,47 @@
 <head>
   <meta charset="UTF-8" />
   <title>Agenda Esportiva</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: #e9ecef;
       margin: 0;
-      padding: 20px;
+      padding: 0;
       color: #222;
     }
+
     header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
       background: #0056b3;
       color: #fff;
-      padding: 25px 20px;
+      padding: 15px 20px;
       text-align: center;
-      font-size: 28px;
+      font-size: 22px;
       font-weight: 700;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,86,179,0.4);
-      margin-bottom: 30px;
-      letter-spacing: 1.2px;
+      box-shadow: 0 4px 8px rgba(0,86,179,0.4);
+      z-index: 1000;
     }
+
+    #eventos {
+      padding: 90px 20px 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
     ul.menu {
       list-style: none;
       padding: 0;
-      max-width: 650px;
-      margin: 0 auto;
+      margin: 0;
     }
+
     ul.menu > li {
       background: #fff;
       border-radius: 14px;
@@ -37,20 +52,24 @@
       padding: 18px 30px;
       transition: box-shadow 0.3s ease;
     }
+
     ul.menu > li:hover {
       box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     }
+
     ul.menu > li > .titulo-evento {
       color: #111;
       font-weight: 600;
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-start;
       align-items: center;
       font-size: 20px;
+      gap: 10px;
       letter-spacing: 0.03em;
       user-select: none;
       cursor: default;
     }
+
     ul.menu > li > .titulo-evento span.t {
       background-color: #007bff;
       color: #fff;
@@ -62,15 +81,18 @@
       text-align: center;
       box-shadow: 0 2px 6px rgba(0,123,255,0.5);
     }
+
     ul.menu > li > ul {
       margin-top: 12px;
       padding-left: 0;
       border-left: none;
       list-style: none;
     }
+
     ul.menu > li > ul > li {
       margin-bottom: 4px;
     }
+
     ul.menu > li > ul > li > a {
       text-decoration: none;
       color: #007bff;
@@ -81,15 +103,76 @@
       transition: color 0.2s ease;
       border-radius: 6px;
     }
+
     ul.menu > li > ul > li > a:hover {
       color: #0056b3;
       background-color: rgba(0, 123, 255, 0.1);
+    }
+
+    .loading-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      height: 50vh;
+      font-size: 18px;
+      font-weight: 500;
+      color: #555;
+    }
+
+    .loading-animation {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 3px solid #ccc;
+      border-top-color: #007bff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 600px) {
+      ul.menu > li {
+        padding: 14px 20px;
+      }
+
+      ul.menu > li > .titulo-evento {
+        font-size: 17px;
+      }
+
+      ul.menu > li > ul > li > a {
+        font-size: 15px;
+      }
+
+      header {
+        font-size: 20px;
+        padding: 14px;
+      }
+
+      .loading-container {
+        font-size: 16px;
+      }
     }
   </style>
 </head>
 <body>
   <header>Agenda Esportiva</header>
-  <div id="eventos">Carregando eventos...</div>
+  <div id="eventos">
+    <div class="loading-container">
+      <div class="loading-animation">
+        <div class="spinner"></div>
+        <span id="loading-text">Carregando eventos... <span id="contador">0</span>s</span>
+      </div>
+    </div>
+  </div>
 
   <script>
     function ajustarHorarioBrasil(horaMinuto) {
@@ -98,7 +181,6 @@
       const [h, m] = horaMinuto.split(':').map(x => parseInt(x, 10));
       if (isNaN(h) || isNaN(m)) return horaMinuto;
 
-      // Convertendo de GMT+2 para GMT-3 (Brasil) → diferença de -5 horas
       let horaBrasilia = h - 5;
       if (horaBrasilia < 0) {
         horaBrasilia += 24;
@@ -109,6 +191,13 @@
 
       return `${hh}:${mm}`;
     }
+
+    let segundos = 0;
+    const contador = document.getElementById('contador');
+    const interval = setInterval(() => {
+      segundos++;
+      if (contador) contador.textContent = segundos;
+    }, 1000);
 
     async function carregarEventos() {
       const url = 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://todopelotatvhd.com/agenda');
@@ -154,7 +243,7 @@
 
           const tituloDiv = document.createElement('div');
           tituloDiv.className = 'titulo-evento';
-          tituloDiv.innerHTML = `${tituloCompleto} <span class="t">${horarioAjustado}</span>`;
+          tituloDiv.innerHTML = `<span class="t">${horarioAjustado}</span> ${tituloCompleto}`;
           li.appendChild(tituloDiv);
 
           const canaisUlOriginal = evento.querySelector('ul');
@@ -168,7 +257,6 @@
               let nomeCanal = canalA.childNodes[0].textContent.trim();
               nomeCanal = nomeCanal.replace(/Calidad\s*\d+p/i, '').trim();
 
-              // CORREÇÃO AQUI: força domínio original
               let hrefOriginal = canalA.getAttribute('href');
               if (hrefOriginal.startsWith('/')) {
                 hrefOriginal = 'https://todopelotatvhd.com' + hrefOriginal;
@@ -190,11 +278,13 @@
           ul.appendChild(li);
         });
 
+        clearInterval(interval);
         container.appendChild(ul);
 
       } catch (err) {
         console.error('Erro ao carregar eventos:', err);
         document.getElementById('eventos').innerText = 'Erro ao carregar eventos.';
+        clearInterval(interval);
       }
     }
 
