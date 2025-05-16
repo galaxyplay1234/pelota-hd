@@ -9,7 +9,7 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: #f5f7fa;
       margin: 0;
-      padding: 0 20px 80px;
+      padding: 0 10px 80px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -22,7 +22,7 @@
       left: 0;
       width: 100%;
       background: #ffffffee;
-      padding: 12px 20px;
+      padding: 10px 20px;
       display: flex;
       align-items: center;
       justify-content: flex-start;
@@ -33,10 +33,10 @@
     .voltar a {
       text-decoration: none;
       color: #007bff;
-      font-size: 20px;
+      font-size: 16px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       font-weight: 600;
     }
 
@@ -45,8 +45,8 @@
     }
 
     .voltar a svg {
-      width: 20px;
-      height: 20px;
+      width: 18px;
+      height: 18px;
       fill: currentColor;
     }
 
@@ -54,7 +54,7 @@
       color: #0056b3;
       font-size: 26px;
       margin-top: 70px;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
       text-align: center;
     }
 
@@ -62,24 +62,24 @@
       background-color: #fff;
       border: 1px solid #ddd;
       border-radius: 10px;
-      padding: 30px;
-      margin-bottom: 30px;
+      padding: 20px;
+      margin-bottom: 10px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.05);
       max-width: 700px;
       width: 100%;
       word-break: break-word;
-      font-size: 16px;
+      font-size: 15px;
       color: #111;
     }
 
     button {
-      margin-top: 20px;
-      padding: 10px 20px;
+      margin-top: 8px;
+      padding: 8px 18px;
       background-color: #007bff;
       border: none;
       border-radius: 6px;
       color: #fff;
-      font-size: 15px;
+      font-size: 14px;
       cursor: pointer;
       transition: background 0.3s ease;
     }
@@ -95,7 +95,7 @@
     .loading {
       font-style: italic;
       color: #666;
-      font-size: 16px;
+      font-size: 15px;
       display: flex;
       align-items: center;
       gap: 10px;
@@ -105,8 +105,8 @@
       border: 4px solid #ccc;
       border-top: 4px solid #007bff;
       border-radius: 50%;
-      width: 20px;
-      height: 20px;
+      width: 18px;
+      height: 18px;
       animation: spin 1s linear infinite;
     }
 
@@ -116,9 +116,9 @@
     }
 
     .bitly-container {
-      margin-top: 30px;
+      margin-top: 25px;
       background: #fff;
-      padding: 30px;
+      padding: 25px;
       border-radius: 10px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.05);
       max-width: 700px;
@@ -132,6 +132,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
+      align-items: center;
     }
 
     .bitly-input-group input {
@@ -144,8 +145,9 @@
 
     .bitly-buttons {
       display: flex;
-      gap: 10px;
       flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-start;
     }
 
     .short-link-output {
@@ -157,12 +159,9 @@
     }
 
     @media (max-width: 600px) {
-      body {
-        padding: 0 10px 60px;
-      }
-
       .bitly-input-group {
         flex-direction: column;
+        align-items: stretch;
       }
 
       .bitly-buttons {
@@ -190,11 +189,11 @@
 
   <button id="copiarBtn" style="display:none;">Copiar Link</button>
 
-  <!-- Bitly encurtador -->
   <div class="bitly-container">
     <div class="bitly-input-group">
       <input type="text" id="linkParaEncurtar" placeholder="Cole aqui o link para encurtar" />
       <button onclick="colarLink()">Colar</button>
+      <button onclick="limparLink()">Apagar</button>
     </div>
     <div class="bitly-buttons">
       <button onclick="encurtarLink()">Encurtar</button>
@@ -263,6 +262,12 @@
       navigator.clipboard.readText().then(text => {
         document.getElementById("linkParaEncurtar").value = text;
       });
+    }
+
+    function limparLink() {
+      document.getElementById("linkParaEncurtar").value = "";
+      document.getElementById("linkEncurtado").textContent = "";
+      document.getElementById("btnCopiarEncurtado").style.display = "none";
     }
 
     async function encurtarLink() {
