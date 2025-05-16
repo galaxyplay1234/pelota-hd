@@ -2,19 +2,14 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Agenda Pelota</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #e9ecef;
       margin: 0;
-      padding: 0;
-      color: #222;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f2f2f2;
+      padding-top: 70px;
     }
 
     header {
@@ -35,9 +30,12 @@
     }
 
     header .titulo {
-      flex: 1;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
       text-align: center;
-      margin-left: -30px;
+      font-size: 22px;
+      font-weight: bold;
       line-height: 1;
     }
 
@@ -46,7 +44,7 @@
       border: none;
       color: #fff;
       cursor: pointer;
-      padding: 6px 10px;
+      padding: 10px;
       border-radius: 50%;
       transition: background 0.3s ease;
       display: flex;
@@ -59,8 +57,8 @@
     }
 
     #refreshIcon {
-      width: 24px;
-      height: 24px;
+      width: 26px;
+      height: 26px;
       fill: #fff;
       transition: transform 0.6s ease;
     }
@@ -69,295 +67,244 @@
       transform: rotate(360deg);
     }
 
-    #eventos {
-      padding: 90px 20px 20px;
+    main {
+      padding: 20px;
       max-width: 800px;
-      margin: 0 auto;
+      margin: auto;
+    }
+
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 60vh;
+      font-size: 20px;
+      color: #333;
+    }
+
+    .loading::after {
+      content: "";
+      margin-left: 10px;
+      border: 3px solid #ccc;
+      border-top: 3px solid #0056b3;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     ul.menu {
       list-style: none;
       padding: 0;
-      margin: 0;
     }
 
     ul.menu > li {
       background: #fff;
-      border-radius: 14px;
-      margin-bottom: 18px;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.08);
-      padding: 18px 30px;
-      transition: box-shadow 0.3s ease;
+      margin-bottom: 15px;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.08);
     }
 
-    ul.menu > li:hover {
-      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-    }
-
-    ul.menu > li > .titulo-evento {
-      color: #111;
-      font-weight: 500;
+    .titulo-evento {
+      font-weight: bold;
+      margin-bottom: 10px;
       display: flex;
-      justify-content: flex-start;
       align-items: center;
-      font-size: 18px;
-      gap: 10px;
-      letter-spacing: 0.03em;
-      user-select: none;
-      cursor: default;
+      gap: 8px;
+      flex-wrap: wrap;
     }
 
-    ul.menu > li > .titulo-evento span.t {
-      background-color: #007bff;
+    .titulo-evento .t {
+      background: #0056b3;
       color: #fff;
-      font-weight: 700;
-      font-size: 14px;
-      padding: 6px 12px;
-      border-radius: 20px;
-      min-width: 60px;
-      text-align: center;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 28px;
-      box-shadow: 0 2px 6px rgba(0,123,255,0.5);
-    }
-
-    ul.menu > li > ul {
-      margin-top: 12px;
-      padding-left: 0;
-      border-left: none;
-      list-style: none;
-    }
-
-    ul.menu > li > ul > li {
-      margin-bottom: 4px;
-    }
-
-    ul.menu > li > ul > li > a {
-      text-decoration: none;
-      color: #007bff;
-      font-weight: 500;
-      font-size: 16px;
-      display: block;
-      padding: 4px 0;
-      transition: color 0.2s ease;
+      padding: 4px 8px;
       border-radius: 6px;
+      font-size: 14px;
     }
 
-    ul.menu > li > ul > li > a:hover {
-      color: #0056b3;
-      background-color: rgba(0, 123, 255, 0.1);
-    }
-
-    .loading-container {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      height: 50vh;
-      font-size: 18px;
+    .titulo-evento span.destacado {
+      background: rgba(0, 0, 0, 0.06);
+      padding: 3px 6px;
+      border-radius: 6px;
+      margin-left: 4px;
       font-weight: 500;
-      color: #555;
     }
 
-    .loading-animation {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    li ul li a {
+      display: inline-block;
+      margin: 3px 5px 0 0;
+      padding: 6px 10px;
+      background: #0056b3;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: background 0.3s;
     }
 
-    .spinner {
-      width: 20px;
-      height: 20px;
-      border: 3px solid #ccc;
-      border-top-color: #007bff;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    li ul li a:hover {
+      background: #003f7f;
     }
 
     @media (max-width: 600px) {
-      ul.menu > li {
-        padding: 14px 20px;
-      }
-
-      ul.menu > li > .titulo-evento {
-        font-size: 16px;
-      }
-
-      ul.menu > li > ul > li > a {
-        font-size: 15px;
-      }
-
-      header {
-        font-size: 20px;
-        padding: 14px;
-      }
-
-      .loading-container {
-        font-size: 16px;
-      }
-
-      header .titulo {
-        font-size: 18px;
-        margin-left: -20px;
-      }
-
-      #refreshIcon {
-        width: 22px;
-        height: 22px;
+      .titulo-evento {
+        flex-direction: column;
+        align-items: flex-start;
       }
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="titulo">Agenda Pelota</div>
-    <button id="refreshBtn" title="Atualizar Agenda">
-      <svg id="refreshIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-        <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
-      </svg>
-    </button>
-  </header>
 
-  <div id="eventos">
-    <div class="loading-container">
-      <div class="loading-animation">
-        <div class="spinner"></div>
-        <span id="loading-text">Carregando eventos... <span id="contador">0</span>s</span>
-      </div>
-    </div>
-  </div>
+<header>
+  <div class="titulo">Agenda Pelota</div>
+  <button id="refreshBtn" title="Atualizar">
+    <svg id="refreshIcon" viewBox="0 0 24 24">
+      <path d="M12 6V3L8 7l4 4V8c2.76 0 5 2.24 5 5a5.002 5.002 0 01-9.9 1h-2.02A7.002 7.002 0 0012 20c3.87 0 7-3.13 7-7s-3.13-7-7-7z"/>
+    </svg>
+  </button>
+</header>
 
-  <script>
-    const refreshBtn = document.getElementById('refreshBtn');
-    refreshBtn.addEventListener('click', () => {
-      refreshBtn.classList.add('spin');
-      setTimeout(() => {
-        location.reload();
-      }, 300);
-    });
+<main>
+  <div id="eventos" class="loading">Carregando eventos...</div>
+</main>
 
-    function ajustarHorarioBrasil(horaMinuto) {
-      if (!horaMinuto) return '';
-      const [h, m] = horaMinuto.split(':').map(x => parseInt(x, 10));
-      if (isNaN(h) || isNaN(m)) return horaMinuto;
-      let horaBrasilia = h - 5;
-      if (horaBrasilia < 0) horaBrasilia += 24;
-      const hh = horaBrasilia.toString().padStart(2, '0');
-      const mm = m.toString().padStart(2, '0');
-      return `${hh}:${mm}`;
-    }
+<script>
+  const refreshBtn = document.getElementById('refreshBtn');
+  refreshBtn.addEventListener('click', () => {
+    refreshBtn.classList.add('spin');
+    setTimeout(() => {
+      location.reload();
+    }, 300);
+  });
 
-    let segundos = 0;
-    let contador = document.getElementById('contador');
-    let interval;
+  function ajustarHorarioBrasil(horaStr) {
+    const [h, m] = horaStr.split(':').map(Number);
+    let data = new Date();
+    data.setUTCHours(h, m);
+    data.setHours(data.getHours() - 1); // Ajuste para GMT-3 (horário de Brasília)
+    return data.toTimeString().slice(0,5);
+  }
 
-    function iniciarContador() {
-      segundos = 0;
-      if (contador) contador.textContent = segundos;
-      clearInterval(interval);
-      interval = setInterval(() => {
-        segundos++;
-        if (contador) contador.textContent = segundos;
-      }, 1000);
-    }
-
-    async function carregarEventos() {
-      iniciarContador();
-      const url = 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://todopelotatvhd.com/agenda');
-      try {
-        const response = await fetch(url);
-        const data = await response.json();
-        const html = data.contents;
-
-        const temp = document.createElement('div');
-        temp.innerHTML = html;
-
-        const container = document.getElementById('eventos');
-        container.innerHTML = '';
-
-        const listaEventos = temp.querySelector('ul.menu');
-        if (!listaEventos) {
-          container.innerHTML = '<p>Nenhum evento encontrado.</p>';
-          return;
-        }
-
-        const eventos = Array.from(listaEventos.children);
-        if (eventos.length === 0) {
-          container.innerHTML = '<p>Nenhum evento encontrado.</p>';
-          return;
-        }
-
-        const ul = document.createElement('ul');
-        ul.className = 'menu';
-
-        eventos.forEach(evento => {
-          const linkPrincipal = evento.querySelector('a');
-          if (!linkPrincipal) return;
-
-          const horarioSpan = linkPrincipal.querySelector('span.t');
-          const horarioOriginal = horarioSpan ? horarioSpan.textContent.trim() : '';
-          const horarioAjustado = ajustarHorarioBrasil(horarioOriginal);
-
-          let tituloCompleto = linkPrincipal.childNodes[0].textContent.trim();
-          tituloCompleto = tituloCompleto.replace(horarioOriginal, '').trim();
-
-          const li = document.createElement('li');
-          li.className = evento.className;
-
-          const tituloDiv = document.createElement('div');
-          tituloDiv.className = 'titulo-evento';
-          tituloDiv.innerHTML = `<span class="t">${horarioAjustado}</span> ${tituloCompleto}`;
-          li.appendChild(tituloDiv);
-
-          const canaisUlOriginal = evento.querySelector('ul');
-          if (canaisUlOriginal) {
-            const canaisUl = document.createElement('ul');
-            canaisUl.style.marginTop = '10px';
-            canaisUl.style.paddingLeft = '0';
-            canaisUl.style.listStyle = 'none';
-
-            canaisUlOriginal.querySelectorAll('li.subitem1 a').forEach(canalA => {
-              let nomeCanal = canalA.childNodes[0].textContent.trim();
-              nomeCanal = nomeCanal.replace(/Calidad\s*\d+p/i, '').trim();
-
-              let hrefOriginal = canalA.getAttribute('href');
-              if (hrefOriginal.startsWith('/')) {
-                hrefOriginal = 'https://todopelotatvhd.com' + hrefOriginal;
-              }
-
-              const linkIframe = `/iframe.html?link=${hrefOriginal}&canal=${encodeURIComponent(nomeCanal)}`;
-
-              const liCanal = document.createElement('li');
-              const aCanal = document.createElement('a');
-              aCanal.href = linkIframe;
-              aCanal.textContent = nomeCanal;
-              liCanal.appendChild(aCanal);
-              canaisUl.appendChild(liCanal);
-            });
-
-            li.appendChild(canaisUl);
-          }
-
-          ul.appendChild(li);
-        });
-
-        clearInterval(interval);
-        container.appendChild(ul);
-
-      } catch (err) {
-        console.error('Erro ao carregar eventos:', err);
-        document.getElementById('eventos').innerText = 'Erro ao carregar eventos.';
-        clearInterval(interval);
+  let interval;
+  function iniciarContador() {
+    interval = setInterval(() => {
+      const el = document.querySelector('.loading');
+      if (el) {
+        el.textContent = 'Carregando eventos...';
       }
-    }
+    }, 5000);
+  }
 
-    carregarEventos();
-  </script>
+  async function carregarEventos() {
+    iniciarContador();
+    const url = 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://todopelotatvhd.com/agenda');
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      const html = data.contents;
+
+      const temp = document.createElement('div');
+      temp.innerHTML = html;
+
+      const container = document.getElementById('eventos');
+      container.innerHTML = '';
+
+      const listaEventos = temp.querySelector('ul.menu');
+      if (!listaEventos) {
+        container.innerHTML = '<p>Nenhum evento encontrado.</p>';
+        return;
+      }
+
+      const eventos = Array.from(listaEventos.children);
+      if (eventos.length === 0) {
+        container.innerHTML = '<p>Nenhum evento encontrado.</p>';
+        return;
+      }
+
+      const ul = document.createElement('ul');
+      ul.className = 'menu';
+
+      eventos.forEach(evento => {
+        const linkPrincipal = evento.querySelector('a');
+        if (!linkPrincipal) return;
+
+        const horarioSpan = linkPrincipal.querySelector('span.t');
+        const horarioOriginal = horarioSpan ? horarioSpan.textContent.trim() : '';
+        const horarioAjustado = ajustarHorarioBrasil(horarioOriginal);
+
+        let tituloCompleto = linkPrincipal.childNodes[0].textContent.trim();
+        tituloCompleto = tituloCompleto.replace(horarioOriginal, '').trim();
+
+        const li = document.createElement('li');
+        li.className = evento.className;
+
+        const tituloDiv = document.createElement('div');
+        tituloDiv.className = 'titulo-evento';
+
+        const partes = tituloCompleto.split(':');
+        const antes = partes[0] ? partes[0].trim() : '';
+        const depois = partes[1] ? partes.slice(1).join(':').trim() : '';
+
+        if (depois) {
+          tituloDiv.innerHTML = `<span class="t">${horarioAjustado}</span> ${antes}: <span class="destacado">${depois}</span>`;
+        } else {
+          tituloDiv.innerHTML = `<span class="t">${horarioAjustado}</span> ${tituloCompleto}`;
+        }
+
+        li.appendChild(tituloDiv);
+
+        const canaisUlOriginal = evento.querySelector('ul');
+        if (canaisUlOriginal) {
+          const canaisUl = document.createElement('ul');
+          canaisUl.style.marginTop = '10px';
+          canaisUl.style.paddingLeft = '0';
+          canaisUl.style.listStyle = 'none';
+
+          canaisUlOriginal.querySelectorAll('li.subitem1 a').forEach(canalA => {
+            let nomeCanal = canalA.childNodes[0].textContent.trim();
+            nomeCanal = nomeCanal.replace(/Calidad\s*\d+p/i, '').trim();
+
+            let hrefOriginal = canalA.getAttribute('href');
+            if (hrefOriginal.startsWith('/')) {
+              hrefOriginal = 'https://todopelotatvhd.com' + hrefOriginal;
+            }
+
+            const linkIframe = `/iframe.html?link=${hrefOriginal}&canal=${encodeURIComponent(nomeCanal)}`;
+
+            const liCanal = document.createElement('li');
+            const aCanal = document.createElement('a');
+            aCanal.href = linkIframe;
+            aCanal.textContent = nomeCanal;
+            liCanal.appendChild(aCanal);
+            canaisUl.appendChild(liCanal);
+          });
+
+          li.appendChild(canaisUl);
+        }
+
+        ul.appendChild(li);
+      });
+
+      clearInterval(interval);
+      container.appendChild(ul);
+
+    } catch (err) {
+      console.error('Erro ao carregar eventos:', err);
+      document.getElementById('eventos').innerText = 'Erro ao carregar eventos.';
+      clearInterval(interval);
+    }
+  }
+
+  carregarEventos();
+</script>
+
 </body>
 </html>
