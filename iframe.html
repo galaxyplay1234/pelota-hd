@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <title>Link do Canal</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -20,7 +19,6 @@
       font-size: 26px;
       margin-bottom: 20px;
       text-align: center;
-      padding: 0 10px;
     }
     #resultado {
       background-color: #fff;
@@ -30,10 +28,9 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.05);
       max-width: 700px;
       width: 100%;
-      word-break: break-word;
+      word-break: break-all;
       font-size: 16px;
       color: #111;
-      box-sizing: border-box;
     }
     button {
       margin-top: 20px;
@@ -56,23 +53,37 @@
       font-style: italic;
       color: #666;
       font-size: 16px;
+      position: relative;
+    }
+    .loading::after {
+      content: "";
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      margin-left: 10px;
+      border: 3px solid #ccc;
+      border-top: 3px solid #007bff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      vertical-align: middle;
+    }
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
     }
 
-    /* Responsividade */
     @media (max-width: 600px) {
       body {
         padding: 20px 10px;
       }
-      h1 {
-        font-size: 22px;
-      }
       #resultado {
-        font-size: 15px;
+        font-size: 14px;
         padding: 15px;
       }
       button {
-        width: 100%;
-        font-size: 16px;
+        font-size: 14px;
+        padding: 8px 16px;
       }
     }
   </style>
@@ -105,13 +116,16 @@
         const iframe = temp.querySelector("iframe");
 
         if (iframe && iframe.src) {
+          document.getElementById("resultado").classList.remove("loading");
           document.getElementById("resultado").textContent = iframe.src;
           document.getElementById("copiarBtn").style.display = "inline-block";
         } else {
+          document.getElementById("resultado").classList.remove("loading");
           document.getElementById("resultado").textContent = "Iframe não encontrado.";
         }
       } catch (erro) {
         console.error("Erro ao buscar iframe:", erro);
+        document.getElementById("resultado").classList.remove("loading");
         document.getElementById("resultado").textContent = "Erro ao buscar o link.";
       }
     }
