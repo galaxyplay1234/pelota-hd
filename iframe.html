@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Link do Canal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -50,59 +51,80 @@
       background-color: #28a745 !important;
     }
     .loading {
-      display: flex;
-      align-items: center;
-      gap: 10px;
       font-style: italic;
       color: #666;
       font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
-    .spinner {
-      width: 16px;
-      height: 16px;
-      border: 2px solid #ccc;
-      border-top: 2px solid #007bff;
+    .loader {
+      border: 4px solid #ccc;
+      border-top: 4px solid #007bff;
       border-radius: 50%;
+      width: 20px;
+      height: 20px;
       animation: spin 1s linear infinite;
     }
     @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
-    #encurtador {
-      margin-top: 40px;
-      width: 100%;
-      max-width: 700px;
+
+    .bitly-container {
+      margin-top: 30px;
       background: #fff;
       padding: 20px;
       border-radius: 10px;
-      border: 1px solid #ddd;
       box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      max-width: 700px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
-    #encurtador input {
-      width: calc(100% - 110px);
+
+    .bitly-input-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .bitly-input-group input {
+      flex: 1;
       padding: 10px;
-      font-size: 15px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      margin-right: 10px;
-    }
-    #encurtador button {
-      padding: 10px 16px;
-    }
-    #linkEncurtado {
-      margin-top: 15px;
       font-size: 14px;
-      word-break: break-word;
+      border-radius: 6px;
+      border: 1px solid #ccc;
     }
+
+    .bitly-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .short-link-output {
+      word-break: break-word;
+      background: #f1f1f1;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 15px;
+    }
+
     @media (max-width: 600px) {
-      #encurtador input {
-        width: 100%;
-        margin-bottom: 10px;
+      body {
+        padding: 20px 10px;
       }
-      #encurtador button {
+      #resultado, .bitly-container {
         width: 100%;
+      }
+      .bitly-input-group {
+        flex-direction: column;
+      }
+      .bitly-buttons {
+        flex-direction: column;
+        align-items: stretch;
       }
     }
   </style>
@@ -110,25 +132,25 @@
 <body>
   <h1>Link do Canal: <span id="canal"></span></h1>
   <div id="resultado" class="loading">
-    <div class="spinner"></div> 
-    Carregando link do canal... <span id="contador">0s</span>
+    <div class="loader"></div>
+    <span id="tempo">0s</span> - Carregando link do canal...
   </div>
   <button id="copiarBtn" style="display:none;">Copiar Link</button>
 
-  <div id="encurtador">
-    <input type="text" id="inputLink" placeholder="Cole aqui um link para encurtar" />
-    <button onclick="encurtarLink()">Encurtar</button>
-    <div id="linkEncurtado"></div>
+  <!-- Bitly encurtador -->
+  <div class="bitly-container">
+    <div class="bitly-input-group">
+      <input type="text" id="linkParaEncurtar" placeholder="Cole aqui o link para encurtar" />
+      <button onclick="colarLink()">Colar</button>
+    </div>
+    <div class="bitly-buttons">
+      <button onclick="encurtarLink()">Encurtar</button>
+      <button onclick="copiarEncurtado()" id="btnCopiarEncurtado" style="display:none;">Copiar Encurtado</button>
+    </div>
+    <div id="linkEncurtado" class="short-link-output"></div>
   </div>
 
   <script>
-    let segundos = 0;
-    const contadorEl = document.getElementById("contador");
-    const intervalo = setInterval(() => {
-      segundos++;
-      contadorEl.textContent = segundos + "s";
-    }, 1000);
-
     async function buscarIframe() {
       const urlParams = new URLSearchParams(window.location.search);
       const link = urlParams.get("link");
@@ -138,9 +160,15 @@
 
       if (!link) {
         document.getElementById("resultado").textContent = "Link inválido.";
-        clearInterval(intervalo);
         return;
       }
+
+      let tempo = 0;
+      const tempoSpan = document.getElementById("tempo");
+      const interval = setInterval(() => {
+        tempo++;
+        tempoSpan.textContent = `${tempo}s`;
+      }, 1000);
 
       try {
         const apiURL = `https://api.scraperapi.com?api_key=f367a6108ce7e5f1fd57ef78c49bd671&url=${encodeURIComponent(link)}&render=true`;
@@ -151,6 +179,8 @@
         temp.innerHTML = html;
         const iframe = temp.querySelector("iframe");
 
+        clearInterval(interval);
+
         if (iframe && iframe.src) {
           document.getElementById("resultado").textContent = iframe.src;
           document.getElementById("copiarBtn").style.display = "inline-block";
@@ -158,10 +188,9 @@
           document.getElementById("resultado").textContent = "Iframe não encontrado.";
         }
       } catch (erro) {
-        console.error("Erro ao buscar iframe:", erro);
+        clearInterval(interval);
         document.getElementById("resultado").textContent = "Erro ao buscar o link.";
       }
-      clearInterval(intervalo);
     }
 
     document.getElementById("copiarBtn").addEventListener("click", () => {
@@ -177,40 +206,47 @@
       });
     });
 
+    function colarLink() {
+      navigator.clipboard.readText().then(text => {
+        document.getElementById("linkParaEncurtar").value = text;
+      });
+    }
+
     async function encurtarLink() {
-      const originalLink = document.getElementById("inputLink").value.trim();
-      if (!originalLink) return;
+      const longUrl = document.getElementById("linkParaEncurtar").value.trim();
+      const token = 'b1db30ea4f7f0a372abaa6fdedee6b1fc50582cd';
 
-      try {
-        const resposta = await fetch("https://api-ssl.bitly.com/v4/shorten", {
-          method: "POST",
-          headers: {
-            "Authorization": "Bearer b1db30ea4f7f0a372abaa6fdedee6b1fc50582cd",
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ long_url: originalLink })
-        });
+      if (!longUrl) return alert("Cole um link para encurtar.");
 
-        const dados = await resposta.json();
-        if (dados.link) {
-          const encurtado = dados.link;
-          document.getElementById("linkEncurtado").innerHTML = `
-            <strong>Link Encurtado:</strong> 
-            <a href="${encurtado}" target="_blank">${encurtado}</a>
-            <button onclick="copiarEncurtado('${encurtado}')">Copiar</button>
-          `;
-        } else {
-          document.getElementById("linkEncurtado").textContent = "Erro ao encurtar link.";
-        }
-      } catch (erro) {
-        console.error("Erro ao encurtar:", erro);
+      const response = await fetch('https://api-ssl.bitly.com/v4/shorten', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ long_url: longUrl })
+      });
+
+      const data = await response.json();
+
+      if (data.link) {
+        document.getElementById("linkEncurtado").textContent = data.link;
+        document.getElementById("btnCopiarEncurtado").style.display = "inline-block";
+      } else {
         document.getElementById("linkEncurtado").textContent = "Erro ao encurtar link.";
       }
     }
 
-    function copiarEncurtado(link) {
-      navigator.clipboard.writeText(link).then(() => {
-        alert("Link encurtado copiado!");
+    function copiarEncurtado() {
+      const texto = document.getElementById("linkEncurtado").textContent;
+      navigator.clipboard.writeText(texto).then(() => {
+        const btn = document.getElementById("btnCopiarEncurtado");
+        btn.textContent = "Copiado!";
+        btn.classList.add("copiado");
+        setTimeout(() => {
+          btn.textContent = "Copiar Encurtado";
+          btn.classList.remove("copiado");
+        }, 2000);
       });
     }
 
