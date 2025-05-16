@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Agenda Esportiva</title>
+  <title>Agenda Pelota</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     * {
@@ -25,11 +25,34 @@
       background: #0056b3;
       color: #fff;
       padding: 15px 20px;
-      text-align: center;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       font-size: 22px;
       font-weight: 700;
       box-shadow: 0 4px 8px rgba(0,86,179,0.4);
       z-index: 1000;
+    }
+
+    header .titulo {
+      flex: 1;
+      text-align: center;
+      margin-left: -30px;
+    }
+
+    #refreshBtn {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 50%;
+      transition: background 0.3s ease;
+    }
+
+    #refreshBtn:hover {
+      background: rgba(255,255,255,0.2);
     }
 
     #eventos {
@@ -59,11 +82,11 @@
 
     ul.menu > li > .titulo-evento {
       color: #111;
-      font-weight: 600;
+      font-weight: 500;
       display: flex;
       justify-content: flex-start;
       align-items: center;
-      font-size: 20px;
+      font-size: 18px;
       gap: 10px;
       letter-spacing: 0.03em;
       user-select: none;
@@ -75,10 +98,14 @@
       color: #fff;
       font-weight: 700;
       font-size: 14px;
-      padding: 4px 10px;
+      padding: 6px 12px;
       border-radius: 20px;
       min-width: 60px;
       text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 28px;
       box-shadow: 0 2px 6px rgba(0,123,255,0.5);
     }
 
@@ -145,7 +172,7 @@
       }
 
       ul.menu > li > .titulo-evento {
-        font-size: 17px;
+        font-size: 16px;
       }
 
       ul.menu > li > ul > li > a {
@@ -160,11 +187,25 @@
       .loading-container {
         font-size: 16px;
       }
+
+      header .titulo {
+        font-size: 18px;
+        margin-left: -20px;
+      }
+
+      #refreshBtn {
+        font-size: 18px;
+        padding: 5px 8px;
+      }
     }
   </style>
 </head>
 <body>
-  <header>Agenda Esportiva</header>
+  <header>
+    <div class="titulo">Agenda Pelota</div>
+    <button id="refreshBtn" title="Atualizar Agenda">🔄</button>
+  </header>
+
   <div id="eventos">
     <div class="loading-container">
       <div class="loading-animation">
@@ -177,29 +218,31 @@
   <script>
     function ajustarHorarioBrasil(horaMinuto) {
       if (!horaMinuto) return '';
-
       const [h, m] = horaMinuto.split(':').map(x => parseInt(x, 10));
       if (isNaN(h) || isNaN(m)) return horaMinuto;
-
       let horaBrasilia = h - 5;
-      if (horaBrasilia < 0) {
-        horaBrasilia += 24;
-      }
-
+      if (horaBrasilia < 0) horaBrasilia += 24;
       const hh = horaBrasilia.toString().padStart(2, '0');
       const mm = m.toString().padStart(2, '0');
-
       return `${hh}:${mm}`;
     }
 
     let segundos = 0;
-    const contador = document.getElementById('contador');
-    const interval = setInterval(() => {
-      segundos++;
+    let contador = document.getElementById('contador');
+    let interval;
+
+    function iniciarContador() {
+      segundos = 0;
       if (contador) contador.textContent = segundos;
-    }, 1000);
+      clearInterval(interval);
+      interval = setInterval(() => {
+        segundos++;
+        if (contador) contador.textContent = segundos;
+      }, 1000);
+    }
 
     async function carregarEventos() {
+      iniciarContador();
       const url = 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://todopelotatvhd.com/agenda');
       try {
         const response = await fetch(url);
@@ -287,6 +330,8 @@
         clearInterval(interval);
       }
     }
+
+    document.getElementById('refreshBtn').addEventListener('click', carregarEventos);
 
     carregarEventos();
   </script>
