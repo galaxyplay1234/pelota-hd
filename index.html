@@ -38,21 +38,35 @@
       flex: 1;
       text-align: center;
       margin-left: -30px;
+      line-height: 1;
     }
 
     #refreshBtn {
       background: none;
       border: none;
       color: #fff;
-      font-size: 20px;
       cursor: pointer;
       padding: 6px 10px;
       border-radius: 50%;
       transition: background 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     #refreshBtn:hover {
       background: rgba(255,255,255,0.2);
+    }
+
+    #refreshIcon {
+      width: 24px;
+      height: 24px;
+      fill: #fff;
+      transition: transform 0.6s ease;
+    }
+
+    #refreshBtn.spin #refreshIcon {
+      transform: rotate(360deg);
     }
 
     #eventos {
@@ -193,9 +207,9 @@
         margin-left: -20px;
       }
 
-      #refreshBtn {
-        font-size: 18px;
-        padding: 5px 8px;
+      #refreshIcon {
+        width: 22px;
+        height: 22px;
       }
     }
   </style>
@@ -203,7 +217,11 @@
 <body>
   <header>
     <div class="titulo">Agenda Pelota</div>
-    <button id="refreshBtn" title="Atualizar Agenda">🔄</button>
+    <button id="refreshBtn" title="Atualizar Agenda">
+      <svg id="refreshIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
+      </svg>
+    </button>
   </header>
 
   <div id="eventos">
@@ -216,6 +234,14 @@
   </div>
 
   <script>
+    const refreshBtn = document.getElementById('refreshBtn');
+    refreshBtn.addEventListener('click', () => {
+      refreshBtn.classList.add('spin');
+      setTimeout(() => {
+        location.reload();
+      }, 300);
+    });
+
     function ajustarHorarioBrasil(horaMinuto) {
       if (!horaMinuto) return '';
       const [h, m] = horaMinuto.split(':').map(x => parseInt(x, 10));
@@ -330,8 +356,6 @@
         clearInterval(interval);
       }
     }
-
-    document.getElementById('refreshBtn').addEventListener('click', carregarEventos);
 
     carregarEventos();
   </script>
