@@ -2,110 +2,113 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Extrair Link do Iframe</title>
+  <title>Link do Canal</title>
   <style>
     body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f7fa;
       margin: 0;
       padding: 40px 20px;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(to right, #1e3c72, #2a5298);
-      color: #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-height: 100vh;
+      color: #333;
     }
-
-    h2 {
+    h1 {
+      color: #0056b3;
+      font-size: 26px;
       margin-bottom: 20px;
       text-align: center;
     }
-
-    .container {
-      background: #ffffff10;
-      padding: 30px;
-      border-radius: 12px;
+    #resultado {
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
       max-width: 700px;
       width: 100%;
-      box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
-    }
-
-    #iframeLink {
-      margin-top: 15px;
-      background: #ffffff20;
-      padding: 12px;
-      border-radius: 6px;
       word-break: break-all;
-      font-weight: bold;
-    }
-
-    button {
-      margin-top: 15px;
-      padding: 12px 20px;
       font-size: 16px;
+      color: #111;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #007bff;
       border: none;
       border-radius: 6px;
-      background-color: #00c853;
-      color: white;
+      color: #fff;
+      font-size: 15px;
       cursor: pointer;
+      transition: background 0.3s ease;
     }
-
-    button.copy-btn {
-      background-color: #2196F3;
+    button:hover {
+      background-color: #0056b3;
+    }
+    .copiado {
+      background-color: #28a745 !important;
+    }
+    .loading {
+      font-style: italic;
+      color: #666;
+      font-size: 16px;
     }
   </style>
 </head>
 <body>
-
-  <h2 id="titulo">Extraindo iframe...</h2>
-
-  <div class="container">
-    <div id="iframeLink">Buscando...</div>
-    <button class="copy-btn" onclick="copiarIframe()">Copiar link</button>
-  </div>
+  <h1>Link do Canal: <span id="canal"></span></h1>
+  <div id="resultado" class="loading">Carregando link do canal...</div>
+  <button id="copiarBtn" style="display:none;">Copiar Link</button>
 
   <script>
-    async function buscarIframe(url) {
-      const apiKey = "f367a6108ce7e5f1fd57ef78c49bd671";
-      const apiUrl = `https://api.scraperapi.com/?api_key=${apiKey}&render=true&url=${url}`;
+    async function buscarIframe() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const link = urlParams.get("link");
+      const canal = urlParams.get("canal");
+
+      document.getElementById("canal").textContent = canal || "Desconhecido";
+
+      if (!link) {
+        document.getElementById("resultado").textContent = "Link inválido.";
+        return;
+      }
 
       try {
-        const res = await fetch(apiUrl);
-        const html = await res.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, "text/html");
-        const iframe = doc.querySelector("iframe");
+        const apiURL = `https://api.scraperapi.com?api_key=f367a6108ce7e5f1fd57ef78c49bd671&url=${encodeURIComponent(link)}&render=true`;
+        const resposta = await fetch(apiURL);
+        const html = await resposta.text();
 
-        const iframeDiv = document.getElementById("iframeLink");
+        const temp = document.createElement("div");
+        temp.innerHTML = html;
+        const iframe = temp.querySelector("iframe");
+
         if (iframe && iframe.src) {
-          iframeDiv.textContent = iframe.src;
+          document.getElementById("resultado").textContent = iframe.src;
+          document.getElementById("copiarBtn").style.display = "inline-block";
         } else {
-          iframeDiv.textContent = "Iframe não encontrado.";
+          document.getElementById("resultado").textContent = "Iframe não encontrado.";
         }
-      } catch (error) {
-        document.getElementById("iframeLink").textContent = "Erro ao buscar o iframe.";
+      } catch (erro) {
+        console.error("Erro ao buscar iframe:", erro);
+        document.getElementById("resultado").textContent = "Erro ao buscar o link.";
       }
     }
 
-    function copiarIframe() {
-      const text = document.getElementById("iframeLink").textContent;
-      navigator.clipboard.writeText(text).then(() => {
-        alert("Link copiado com sucesso!");
+    document.getElementById("copiarBtn").addEventListener("click", () => {
+      const texto = document.getElementById("resultado").textContent;
+      navigator.clipboard.writeText(texto).then(() => {
+        const btn = document.getElementById("copiarBtn");
+        btn.textContent = "Copiado!";
+        btn.classList.add("copiado");
+        setTimeout(() => {
+          btn.textContent = "Copiar Link";
+          btn.classList.remove("copiado");
+        }, 2000);
       });
-    }
+    });
 
-    // Coleta da URL
-    const params = new URLSearchParams(window.location.search);
-    const link = params.get("link");
-    const canal = params.get("canal");
-
-    if (link) {
-      document.getElementById("titulo").textContent = `Canal: ${canal || "Desconhecido"}`;
-      buscarIframe(link);
-    } else {
-      document.getElementById("iframeLink").textContent = "Link do canal não fornecido.";
-    }
+    buscarIframe();
   </script>
 </body>
 </html>
