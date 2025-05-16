@@ -69,12 +69,17 @@
       animation: spin 1s linear infinite;
       vertical-align: middle;
     }
+    .contador {
+      margin-left: 8px;
+      font-weight: bold;
+      font-size: 15px;
+      color: #888;
+    }
     @keyframes spin {
       to {
         transform: rotate(360deg);
       }
     }
-
     @media (max-width: 600px) {
       body {
         padding: 20px 10px;
@@ -97,10 +102,17 @@
 </head>
 <body>
   <h1>Link do Canal: <span id="canal"></span></h1>
-  <div id="resultado" class="loading">Carregando link do canal...</div>
+  <div id="resultado" class="loading">Carregando link do canal...<span class="contador" id="contador">0s</span></div>
   <button id="copiarBtn" style="display:none;">Copiar Link</button>
 
   <script>
+    let segundos = 0;
+    const contadorEl = document.getElementById("contador");
+    const intervalo = setInterval(() => {
+      segundos++;
+      contadorEl.textContent = `${segundos}s`;
+    }, 1000);
+
     async function buscarIframe() {
       const urlParams = new URLSearchParams(window.location.search);
       const link = urlParams.get("link");
@@ -109,6 +121,7 @@
       document.getElementById("canal").textContent = canal || "Desconhecido";
 
       if (!link) {
+        clearInterval(intervalo);
         document.getElementById("resultado").textContent = "Link inválido.";
         return;
       }
@@ -123,14 +136,17 @@
         const iframe = temp.querySelector("iframe");
 
         if (iframe && iframe.src) {
+          clearInterval(intervalo);
           document.getElementById("resultado").classList.remove("loading");
           document.getElementById("resultado").textContent = iframe.src;
           document.getElementById("copiarBtn").style.display = "inline-block";
         } else {
+          clearInterval(intervalo);
           document.getElementById("resultado").classList.remove("loading");
           document.getElementById("resultado").textContent = "Iframe não encontrado.";
         }
       } catch (erro) {
+        clearInterval(intervalo);
         console.error("Erro ao buscar iframe:", erro);
         document.getElementById("resultado").classList.remove("loading");
         document.getElementById("resultado").textContent = "Erro ao buscar o link.";
