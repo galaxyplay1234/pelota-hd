@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <title>Link do Canal</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -32,7 +31,6 @@
       word-break: break-word;
       font-size: 16px;
       color: #111;
-      box-sizing: border-box;
     }
     button {
       margin-top: 20px;
@@ -52,65 +50,83 @@
       background-color: #28a745 !important;
     }
     .loading {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       font-style: italic;
       color: #666;
       font-size: 16px;
-      position: relative;
     }
-    .loading::after {
-      content: "";
-      display: inline-block;
+    .spinner {
       width: 16px;
       height: 16px;
-      margin-left: 10px;
-      border: 3px solid #ccc;
-      border-top: 3px solid #007bff;
+      border: 2px solid #ccc;
+      border-top: 2px solid #007bff;
       border-radius: 50%;
       animation: spin 1s linear infinite;
-      vertical-align: middle;
-    }
-    .contador {
-      margin-left: 8px;
-      font-weight: bold;
-      font-size: 15px;
-      color: #888;
     }
     @keyframes spin {
       to {
         transform: rotate(360deg);
       }
     }
+    #encurtador {
+      margin-top: 40px;
+      width: 100%;
+      max-width: 700px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+    #encurtador input {
+      width: calc(100% - 110px);
+      padding: 10px;
+      font-size: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin-right: 10px;
+    }
+    #encurtador button {
+      padding: 10px 16px;
+    }
+    #linkEncurtado {
+      margin-top: 15px;
+      font-size: 14px;
+      word-break: break-word;
+    }
     @media (max-width: 600px) {
-      body {
-        padding: 20px 10px;
-      }
-      h1 {
-        font-size: 20px;
-      }
-      #resultado {
-        font-size: 14px;
-        padding: 15px;
-      }
-      button {
-        font-size: 14px;
-        padding: 10px;
+      #encurtador input {
         width: 100%;
-        max-width: 300px;
+        margin-bottom: 10px;
+      }
+      #encurtador button {
+        width: 100%;
       }
     }
   </style>
 </head>
 <body>
   <h1>Link do Canal: <span id="canal"></span></h1>
-  <div id="resultado" class="loading">Carregando link do canal...<span class="contador" id="contador">0s</span></div>
+  <div id="resultado" class="loading">
+    <div class="spinner"></div> 
+    Carregando link do canal... <span id="contador">0s</span>
+  </div>
   <button id="copiarBtn" style="display:none;">Copiar Link</button>
+
+  <div id="encurtador">
+    <input type="text" id="inputLink" placeholder="Cole aqui um link para encurtar" />
+    <button onclick="encurtarLink()">Encurtar</button>
+    <div id="linkEncurtado"></div>
+  </div>
 
   <script>
     let segundos = 0;
     const contadorEl = document.getElementById("contador");
     const intervalo = setInterval(() => {
       segundos++;
-      contadorEl.textContent = `${segundos}s`;
+      contadorEl.textContent = segundos + "s";
     }, 1000);
 
     async function buscarIframe() {
@@ -121,8 +137,8 @@
       document.getElementById("canal").textContent = canal || "Desconhecido";
 
       if (!link) {
-        clearInterval(intervalo);
         document.getElementById("resultado").textContent = "Link inválido.";
+        clearInterval(intervalo);
         return;
       }
 
@@ -136,21 +152,16 @@
         const iframe = temp.querySelector("iframe");
 
         if (iframe && iframe.src) {
-          clearInterval(intervalo);
-          document.getElementById("resultado").classList.remove("loading");
           document.getElementById("resultado").textContent = iframe.src;
           document.getElementById("copiarBtn").style.display = "inline-block";
         } else {
-          clearInterval(intervalo);
-          document.getElementById("resultado").classList.remove("loading");
           document.getElementById("resultado").textContent = "Iframe não encontrado.";
         }
       } catch (erro) {
-        clearInterval(intervalo);
         console.error("Erro ao buscar iframe:", erro);
-        document.getElementById("resultado").classList.remove("loading");
         document.getElementById("resultado").textContent = "Erro ao buscar o link.";
       }
+      clearInterval(intervalo);
     }
 
     document.getElementById("copiarBtn").addEventListener("click", () => {
@@ -165,6 +176,43 @@
         }, 2000);
       });
     });
+
+    async function encurtarLink() {
+      const originalLink = document.getElementById("inputLink").value.trim();
+      if (!originalLink) return;
+
+      try {
+        const resposta = await fetch("https://api-ssl.bitly.com/v4/shorten", {
+          method: "POST",
+          headers: {
+            "Authorization": "Bearer b1db30ea4f7f0a372abaa6fdedee6b1fc50582cd",
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ long_url: originalLink })
+        });
+
+        const dados = await resposta.json();
+        if (dados.link) {
+          const encurtado = dados.link;
+          document.getElementById("linkEncurtado").innerHTML = `
+            <strong>Link Encurtado:</strong> 
+            <a href="${encurtado}" target="_blank">${encurtado}</a>
+            <button onclick="copiarEncurtado('${encurtado}')">Copiar</button>
+          `;
+        } else {
+          document.getElementById("linkEncurtado").textContent = "Erro ao encurtar link.";
+        }
+      } catch (erro) {
+        console.error("Erro ao encurtar:", erro);
+        document.getElementById("linkEncurtado").textContent = "Erro ao encurtar link.";
+      }
+    }
+
+    function copiarEncurtado(link) {
+      navigator.clipboard.writeText(link).then(() => {
+        alert("Link encurtado copiado!");
+      });
+    }
 
     buscarIframe();
   </script>
