@@ -141,7 +141,7 @@
       display: inline-block;
       margin: 2px 5px 0 0;
       padding: 5px 8px;
-      background: #0056b3;
+      background: #4d90e6; /* azul mais suave */
       color: white;
       text-decoration: none;
       border-radius: 5px;
@@ -149,14 +149,13 @@
     }
 
     li ul li a:hover {
-      background: #003f7f;
+      background: #357bd8;
     }
 
     @media (max-width: 600px) {
       .titulo-evento {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
+        flex-wrap: wrap;
+        gap: 6px;
       }
     }
   </style>
@@ -191,10 +190,9 @@
 
   function ajustarHorarioBrasil(horaStr) {
     const [h, m] = horaStr.split(':').map(Number);
-    let data = new Date();
-    data.setUTCHours(h, m);
-    data.setHours(data.getHours() - 1);
-    return data.toTimeString().slice(0,5);
+    let utcDate = new Date(Date.UTC(2000, 0, 1, h, m));
+    utcDate.setHours(utcDate.getHours() - 3); // GMT-3
+    return utcDate.toTimeString().slice(0, 5);
   }
 
   async function carregarEventos() {
@@ -246,9 +244,9 @@
         const depois = partes[1] ? partes.slice(1).join(':').trim() : '';
 
         if (depois) {
-          tituloDiv.innerHTML = `<span class="t">${horarioAjustado}</span> ${antes}: <span class="destacado">${depois}</span>`;
+          tituloDiv.innerHTML = `<span class="t">${horarioAjustado}</span><span>${antes}:</span> <span class="destacado">${depois}</span>`;
         } else {
-          tituloDiv.innerHTML = `<span class="t">${horarioAjustado}</span> ${tituloCompleto}`;
+          tituloDiv.innerHTML = `<span class="t">${horarioAjustado}</span><span class="destacado">${tituloCompleto}</span>`;
         }
 
         li.appendChild(tituloDiv);
@@ -285,7 +283,6 @@
         ul.appendChild(li);
       });
 
-      // Esconder a bolinha e mostrar os eventos
       document.getElementById('loading').style.display = 'none';
       eventosEl.style.display = 'block';
       eventosEl.appendChild(ul);
