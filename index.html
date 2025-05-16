@@ -19,37 +19,33 @@
       right: 0;
       background: #0056b3;
       color: #fff;
-      padding: 15px 20px;
+      height: 60px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      font-size: 22px;
-      font-weight: 700;
-      box-shadow: 0 4px 8px rgba(0,86,179,0.4);
+      justify-content: center;
       z-index: 1000;
+      box-shadow: 0 4px 8px rgba(0,86,179,0.4);
     }
 
-    header .titulo {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      text-align: center;
-      font-size: 22px;
+    .titulo {
+      font-size: 20px;
       font-weight: bold;
-      line-height: 1;
+      text-align: center;
     }
 
     #refreshBtn {
+      position: absolute;
+      right: 15px;
       background: none;
       border: none;
       color: #fff;
       cursor: pointer;
       padding: 10px;
       border-radius: 50%;
-      transition: background 0.3s ease;
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: background 0.3s ease;
     }
 
     #refreshBtn:hover {
@@ -57,8 +53,8 @@
     }
 
     #refreshIcon {
-      width: 26px;
-      height: 26px;
+      width: 22px;
+      height: 22px;
       fill: #fff;
       transition: transform 0.6s ease;
     }
@@ -68,7 +64,7 @@
     }
 
     main {
-      padding: 20px;
+      padding: 15px;
       max-width: 800px;
       margin: auto;
     }
@@ -78,7 +74,7 @@
       justify-content: center;
       align-items: center;
       height: 60vh;
-      font-size: 20px;
+      font-size: 18px;
       color: #333;
     }
 
@@ -88,8 +84,8 @@
       border: 3px solid #ccc;
       border-top: 3px solid #0056b3;
       border-radius: 50%;
-      width: 18px;
-      height: 18px;
+      width: 16px;
+      height: 16px;
       animation: spin 0.8s linear infinite;
     }
 
@@ -106,47 +102,46 @@
 
     ul.menu > li {
       background: #fff;
-      margin-bottom: 15px;
-      padding: 15px;
+      margin-bottom: 12px;
+      padding: 12px;
       border-radius: 10px;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.06);
     }
 
     .titulo-evento {
       font-weight: bold;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
+      font-size: 15px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       flex-wrap: wrap;
     }
 
     .titulo-evento .t {
       background: #0056b3;
       color: #fff;
-      padding: 4px 8px;
+      padding: 3px 6px;
       border-radius: 6px;
-      font-size: 14px;
+      font-size: 13px;
     }
 
     .titulo-evento span.destacado {
       background: rgba(0, 0, 0, 0.06);
-      padding: 3px 6px;
-      border-radius: 6px;
-      margin-left: 4px;
+      padding: 2px 5px;
+      border-radius: 5px;
       font-weight: 500;
     }
 
     li ul li a {
       display: inline-block;
-      margin: 3px 5px 0 0;
-      padding: 6px 10px;
+      margin: 2px 5px 0 0;
+      padding: 5px 8px;
       background: #0056b3;
       color: white;
       text-decoration: none;
-      border-radius: 6px;
-      font-size: 14px;
-      transition: background 0.3s;
+      border-radius: 5px;
+      font-size: 13px;
     }
 
     li ul li a:hover {
@@ -189,7 +184,7 @@
     const [h, m] = horaStr.split(':').map(Number);
     let data = new Date();
     data.setUTCHours(h, m);
-    data.setHours(data.getHours() - 1); // Ajuste para GMT-3 (horário de Brasília)
+    data.setHours(data.getHours() - 1);
     return data.toTimeString().slice(0,5);
   }
 
@@ -264,7 +259,7 @@
         const canaisUlOriginal = evento.querySelector('ul');
         if (canaisUlOriginal) {
           const canaisUl = document.createElement('ul');
-          canaisUl.style.marginTop = '10px';
+          canaisUl.style.marginTop = '8px';
           canaisUl.style.paddingLeft = '0';
           canaisUl.style.listStyle = 'none';
 
@@ -294,6 +289,7 @@
       });
 
       clearInterval(interval);
+      container.innerHTML = '';
       container.appendChild(ul);
 
     } catch (err) {
