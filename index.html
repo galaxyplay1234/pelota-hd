@@ -65,7 +65,7 @@
 
     main {
       padding: 15px;
-      max-width: 800px;
+      max-width: 900px;
       margin: auto;
     }
 
@@ -76,16 +76,17 @@
       height: 60vh;
       font-size: 18px;
       color: #333;
+      flex-direction: column;
     }
 
     .loading::after {
       content: "";
-      margin-left: 10px;
+      margin-top: 10px;
       border: 3px solid #ccc;
       border-top: 3px solid #0056b3;
       border-radius: 50%;
-      width: 16px;
-      height: 16px;
+      width: 20px;
+      height: 20px;
       animation: spin 0.8s linear infinite;
     }
 
@@ -98,38 +99,39 @@
     ul.menu {
       list-style: none;
       padding: 0;
+      margin: 0;
     }
 
     ul.menu > li {
       background: #fff;
-      margin-bottom: 12px;
-      padding: 12px;
+      margin-bottom: 14px;
+      padding: 12px 16px;
       border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     }
 
     .titulo-evento {
+      display: flex;
+      align-items: center;
       font-weight: bold;
       margin-bottom: 8px;
       font-size: 15px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
+      gap: 10px;
     }
 
     .titulo-evento .t {
       background: #0056b3;
       color: #fff;
-      padding: 3px 6px;
+      padding: 4px 8px;
       border-radius: 6px;
       font-size: 13px;
+      flex-shrink: 0;
     }
 
     .titulo-evento span.destacado {
       background: rgba(0, 0, 0, 0.06);
-      padding: 2px 5px;
-      border-radius: 5px;
+      padding: 2px 6px;
+      border-radius: 6px;
       font-weight: 500;
     }
 
@@ -152,6 +154,7 @@
       .titulo-evento {
         flex-direction: column;
         align-items: flex-start;
+        gap: 4px;
       }
     }
   </style>
@@ -188,18 +191,7 @@
     return data.toTimeString().slice(0,5);
   }
 
-  let interval;
-  function iniciarContador() {
-    interval = setInterval(() => {
-      const el = document.querySelector('.loading');
-      if (el) {
-        el.textContent = 'Carregando eventos...';
-      }
-    }, 5000);
-  }
-
   async function carregarEventos() {
-    iniciarContador();
     const url = 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://todopelotatvhd.com/agenda');
     try {
       const response = await fetch(url);
@@ -239,7 +231,6 @@
         tituloCompleto = tituloCompleto.replace(horarioOriginal, '').trim();
 
         const li = document.createElement('li');
-        li.className = evento.className;
 
         const tituloDiv = document.createElement('div');
         tituloDiv.className = 'titulo-evento';
@@ -288,14 +279,12 @@
         ul.appendChild(li);
       });
 
-      clearInterval(interval);
       container.innerHTML = '';
       container.appendChild(ul);
 
     } catch (err) {
       console.error('Erro ao carregar eventos:', err);
       document.getElementById('eventos').innerText = 'Erro ao carregar eventos.';
-      clearInterval(interval);
     }
   }
 
