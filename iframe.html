@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Link do Canal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -28,9 +29,10 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.05);
       max-width: 700px;
       width: 100%;
-      word-break: break-all;
+      word-break: break-word;
       font-size: 16px;
       color: #111;
+      box-sizing: border-box;
     }
     button {
       margin-top: 20px;
@@ -77,13 +79,18 @@
       body {
         padding: 20px 10px;
       }
+      h1 {
+        font-size: 20px;
+      }
       #resultado {
         font-size: 14px;
         padding: 15px;
       }
       button {
         font-size: 14px;
-        padding: 8px 16px;
+        padding: 10px;
+        width: 100%;
+        max-width: 300px;
       }
     }
   </style>
