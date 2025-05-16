@@ -9,23 +9,61 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: #f5f7fa;
       margin: 0;
-      padding: 40px 20px;
+      padding: 0 20px 80px;
       display: flex;
       flex-direction: column;
       align-items: center;
       color: #333;
     }
+
+    .voltar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: #ffffffee;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+      z-index: 1000;
+    }
+
+    .voltar a {
+      text-decoration: none;
+      color: #007bff;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+    }
+
+    .voltar a:hover {
+      color: #0056b3;
+    }
+
+    .voltar a svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+
     h1 {
       color: #0056b3;
       font-size: 26px;
+      margin-top: 70px;
       margin-bottom: 20px;
       text-align: center;
     }
+
     #resultado {
       background-color: #fff;
       border: 1px solid #ddd;
       border-radius: 10px;
-      padding: 20px;
+      padding: 30px;
+      margin-bottom: 30px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.05);
       max-width: 700px;
       width: 100%;
@@ -33,6 +71,7 @@
       font-size: 16px;
       color: #111;
     }
+
     button {
       margin-top: 20px;
       padding: 10px 20px;
@@ -44,12 +83,15 @@
       cursor: pointer;
       transition: background 0.3s ease;
     }
+
     button:hover {
       background-color: #0056b3;
     }
+
     .copiado {
       background-color: #28a745 !important;
     }
+
     .loading {
       font-style: italic;
       color: #666;
@@ -58,6 +100,7 @@
       align-items: center;
       gap: 10px;
     }
+
     .loader {
       border: 4px solid #ccc;
       border-top: 4px solid #007bff;
@@ -66,6 +109,7 @@
       height: 20px;
       animation: spin 1s linear infinite;
     }
+
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
@@ -74,7 +118,7 @@
     .bitly-container {
       margin-top: 30px;
       background: #fff;
-      padding: 20px;
+      padding: 30px;
       border-radius: 10px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.05);
       max-width: 700px;
@@ -114,14 +158,13 @@
 
     @media (max-width: 600px) {
       body {
-        padding: 20px 10px;
+        padding: 0 10px 60px;
       }
-      #resultado, .bitly-container {
-        width: 100%;
-      }
+
       .bitly-input-group {
         flex-direction: column;
       }
+
       .bitly-buttons {
         flex-direction: column;
         align-items: stretch;
@@ -130,11 +173,21 @@
   </style>
 </head>
 <body>
+
+  <div class="voltar">
+    <a href="index.html">
+      <svg viewBox="0 0 24 24"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+      Voltar
+    </a>
+  </div>
+
   <h1>Link do Canal: <span id="canal"></span></h1>
+
   <div id="resultado" class="loading">
     <div class="loader"></div>
     <span id="tempo">0s</span> - Carregando link do canal...
   </div>
+
   <button id="copiarBtn" style="display:none;">Copiar Link</button>
 
   <!-- Bitly encurtador -->
