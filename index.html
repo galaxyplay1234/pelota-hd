@@ -69,19 +69,21 @@
       margin: auto;
     }
 
-    .loading {
+    .loading-container {
       display: flex;
       justify-content: center;
       align-items: center;
       height: 60vh;
-      font-size: 18px;
-      color: #333;
       flex-direction: column;
     }
 
-    .loading::after {
-      content: "";
-      margin-top: 10px;
+    .loading-text {
+      font-size: 18px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .loading-spinner {
       border: 3px solid #ccc;
       border-top: 3px solid #0056b3;
       border-radius: 50%;
@@ -171,7 +173,11 @@
 </header>
 
 <main>
-  <div id="eventos" class="loading">Carregando eventos...</div>
+  <div id="loading" class="loading-container">
+    <div class="loading-text">Carregando eventos...</div>
+    <div class="loading-spinner"></div>
+  </div>
+  <div id="eventos" style="display: none;"></div>
 </main>
 
 <script>
@@ -201,18 +207,18 @@
       const temp = document.createElement('div');
       temp.innerHTML = html;
 
-      const container = document.getElementById('eventos');
-      container.innerHTML = '';
+      const eventosEl = document.getElementById('eventos');
+      eventosEl.innerHTML = '';
 
       const listaEventos = temp.querySelector('ul.menu');
       if (!listaEventos) {
-        container.innerHTML = '<p>Nenhum evento encontrado.</p>';
+        eventosEl.innerHTML = '<p>Nenhum evento encontrado.</p>';
         return;
       }
 
       const eventos = Array.from(listaEventos.children);
       if (eventos.length === 0) {
-        container.innerHTML = '<p>Nenhum evento encontrado.</p>';
+        eventosEl.innerHTML = '<p>Nenhum evento encontrado.</p>';
         return;
       }
 
@@ -279,12 +285,14 @@
         ul.appendChild(li);
       });
 
-      container.innerHTML = '';
-      container.appendChild(ul);
+      // Esconder a bolinha e mostrar os eventos
+      document.getElementById('loading').style.display = 'none';
+      eventosEl.style.display = 'block';
+      eventosEl.appendChild(ul);
 
     } catch (err) {
       console.error('Erro ao carregar eventos:', err);
-      document.getElementById('eventos').innerText = 'Erro ao carregar eventos.';
+      document.getElementById('loading').innerHTML = 'Erro ao carregar eventos.';
     }
   }
 
